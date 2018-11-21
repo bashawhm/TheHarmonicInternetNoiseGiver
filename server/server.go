@@ -1,13 +1,19 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
 	"net"
 	"os"
 	"time"
+
+	"github.com/pions/webrtc"
+	"github.com/pions/webrtc/examples/util"
+	"github.com/pions/webrtc/pkg/ice"
 )
 
 type Song struct {
-	audio  os.File
+	audio  *os.File
 	title  string
 	artist string
 	tag1   string
@@ -15,7 +21,8 @@ type Song struct {
 }
 
 type Client struct {
-	conn          net.Conn
+	control       net.Conn
+	rtcconn       *webrtc.RTCPeerConnection
 	username      string
 	moderator     bool
 	notifications []string
@@ -50,6 +57,7 @@ func (lobby *Lobby) getClients() []Client {
 	return clients
 }
 
+/*
 func (client *Client) getDelay() time.Time {
 
 }
@@ -65,7 +73,66 @@ func (lobby *Lobby) syncPlay(song Song) string {
 func (lobby *Lobby) syncPause() string {
 
 }
+*/
 
 func main() {
+	fmt.Fprintf(os.Stderr, "THING server starting...\n")
+	webrtc.RegisterDefaultCodecs()
+	config := webrtc.RTCConfiguration{
+		IceServers: []webrtc.RTCIceServer{
+			{
+				URLs: []string{"stun:stun.l.google.com:19302"},
+			},
+		},
+	}
+	var clients []Client
+	for {
+		fmt.Println("Accepting control connections...")
+		ln, err := net.Listen("tcp", "localhost:9000")
+		if err != nil {
+			fmt.Println("Failed to get connection")
+			continue
+		}
+		cconn, err := ln.Accept()
+		if err != nil {
+			panic(err)
+		}
+		//Create a new WebRTC peer Connection
+		pconn, err := webrtc.New(config)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create new connection\n")
+		}
+		defer pconn.Close()
 
+		pconn.OnICEConnectionStateChange(func(connState ice.ConnectionState) {
+			fmt.Fprintf(os.Stderr, "ICE state change\n")
+			fmt.Println(connState.String())
+		})
+
+		fmt.Fprintf(os.Stderr, "Creating offer\n")
+		offer, err := pconn.CreateOffer(nil)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create offer\n")
+		}
+		fmt.Fprintf(cconn, util.Encode(offer.Sdp)+"\n")
+
+		nin := bufio.NewScanner(bufio.NewReader(cconn))
+		nin.Split(bufio.ScanLines)
+		nin.Scan()
+		fmt.Println("Got offer from client")
+		sd := util.Decode(nin.Text())
+
+		answer := webrtc.RTCSessionDescription{
+			Type: webrtc.RTCSdpTypeAnswer,
+			Sdp:  sd,
+		}
+
+		err = pconn.SetRemoteDescription(answer)
+		if err != nil {
+			panic(err)
+		}
+
+		clients = append(clients, Client{control: cconn, rtcconn: pconn})
+
+	}
 }
