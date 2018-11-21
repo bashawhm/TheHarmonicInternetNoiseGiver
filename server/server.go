@@ -85,10 +85,11 @@ func main() {
 			},
 		},
 	}
+
 	var clients []Client
+	ln, err := net.Listen("tcp", "localhost:9000")
 	for {
 		fmt.Println("Accepting control connections...")
-		ln, err := net.Listen("tcp", "localhost:9000")
 		if err != nil {
 			fmt.Println("Failed to get connection")
 			continue
@@ -105,7 +106,6 @@ func main() {
 		defer pconn.Close()
 
 		pconn.OnICEConnectionStateChange(func(connState ice.ConnectionState) {
-			fmt.Fprintf(os.Stderr, "ICE state change\n")
 			fmt.Println(connState.String())
 		})
 
