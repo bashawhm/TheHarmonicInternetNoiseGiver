@@ -9,6 +9,7 @@ import (
 
 	"github.com/pions/webrtc"
 	"github.com/pions/webrtc/examples/util"
+	"github.com/pions/webrtc/pkg/datachannel"
 	"github.com/pions/webrtc/pkg/ice"
 )
 
@@ -21,8 +22,9 @@ type Song struct {
 }
 
 type Client struct {
-	control       net.Conn
-	rtcconn       *webrtc.RTCPeerConnection
+	control       net.Conn                  //Defines the control channel
+	rtcconn       *webrtc.RTCPeerConnection //Defines the webRTC connection used for managing
+	channel       *webrtc.RTCDataChannel    //Defines the webrtc data channel used for file transfer
 	username      string
 	moderator     bool
 	notifications []string
@@ -75,6 +77,13 @@ func (lobby *Lobby) syncPause() string {
 }
 */
 
+func (lobby *Lobby) massSend(msg string) {
+	clients := lobby.getClients()
+	for _, client := range clients {
+		client.channel.Send(datachannel.PayloadString{Data: []byte(msg)})
+	}
+}
+
 func main() {
 	fmt.Fprintf(os.Stderr, "THING server starting...\n")
 	webrtc.RegisterDefaultCodecs()
@@ -86,33 +95,56 @@ func main() {
 		},
 	}
 
-	var clients []Client
+	var lobby Lobby = Lobby{name: "Testing lobby"}
+
+	//Testing function
+	go func() {
+		cin := bufio.NewScanner(os.Stdin)
+		cin.Split(bufio.ScanLines)
+		for {
+			cin.Scan()
+			lobby.massSend(cin.Text())
+		}
+	}()
+
 	ln, err := net.Listen("tcp", "localhost:9000")
+	var admin bool = true
 	for {
 		fmt.Println("Accepting control connections...")
 		if err != nil {
-			fmt.Println("Failed to get connection")
+			fmt.Fprintf(os.Stderr, "Failed to get connection")
 			continue
 		}
 		cconn, err := ln.Accept()
 		if err != nil {
 			panic(err)
 		}
+
 		//Create a new WebRTC peer Connection
 		pconn, err := webrtc.New(config)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create new connection\n")
+			continue
 		}
 		defer pconn.Close()
+		maxRetrans := uint16(8)
+		dataChannel, err := pconn.CreateDataChannel("audio", &webrtc.RTCDataChannelInit{MaxRetransmits: &maxRetrans})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create data channel\n")
+			continue
+		}
+
+		dataChannel.OnOpen(func() { fmt.Println("Data Channel opening") })
 
 		pconn.OnICEConnectionStateChange(func(connState ice.ConnectionState) {
 			fmt.Println(connState.String())
 		})
 
-		fmt.Fprintf(os.Stderr, "Creating offer\n")
+		fmt.Println("Creating offer")
 		offer, err := pconn.CreateOffer(nil)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create offer\n")
+			continue
 		}
 		fmt.Fprintf(cconn, util.Encode(offer.Sdp)+"\n")
 
@@ -129,10 +161,14 @@ func main() {
 
 		err = pconn.SetRemoteDescription(answer)
 		if err != nil {
-			panic(err)
+			fmt.Fprintf(os.Stderr, "Failed to set remote descriptor\n")
+			continue
 		}
-
-		clients = append(clients, Client{control: cconn, rtcconn: pconn})
-
+		if admin {
+			lobby.admin = Client{control: cconn, rtcconn: pconn, channel: dataChannel}
+			admin = false
+		} else {
+			lobby.users = append(lobby.users, Client{control: cconn, rtcconn: pconn, channel: dataChannel})
+		}
 	}
 }

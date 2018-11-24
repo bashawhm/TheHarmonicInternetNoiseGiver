@@ -7,6 +7,7 @@ import (
 
 	"github.com/pions/webrtc"
 	"github.com/pions/webrtc/examples/util"
+	"github.com/pions/webrtc/pkg/datachannel"
 	"github.com/pions/webrtc/pkg/ice"
 )
 
@@ -31,6 +32,7 @@ func main() {
 		fmt.Println(connState.String())
 	})
 
+	fmt.Println("Starting control channel...")
 	sconn, err := net.Dial("tcp", "localhost:9000")
 	if err != nil {
 		panic(err)
@@ -58,5 +60,23 @@ func main() {
 		panic(err)
 	}
 	fmt.Fprintf(sconn, util.Encode(answer.Sdp)+"\n")
+
+	pconn.OnDataChannel(func(d *webrtc.RTCDataChannel) {
+		d.OnOpen(func() {
+			fmt.Println("Opened dada connection to server")
+		})
+
+		d.OnMessage(func(payload datachannel.Payload) {
+			switch p := payload.(type) {
+			case *datachannel.PayloadString:
+				fmt.Printf("Message '%s' from DataChannel '%s' payload '%s'\n", p.PayloadType().String(), d.Label, string(p.Data))
+			case *datachannel.PayloadBinary:
+				fmt.Printf("Message '%s' from DataChannel '%s' payload '% 02x'\n", p.PayloadType().String(), d.Label, p.Data)
+			default:
+				fmt.Printf("Message '%s' from DataChannel '%s' no payload \n", p.PayloadType().String(), d.Label)
+			}
+		})
+	})
+
 	select {}
 }
