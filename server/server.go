@@ -117,7 +117,8 @@ func main() {
 		}
 		cconn, err := ln.Accept()
 		if err != nil {
-			panic(err)
+			fmt.Fprintf(os.Stderr, "Failed to accept connection")
+			continue
 		}
 
 		//Create a new WebRTC peer Connection
@@ -134,36 +135,34 @@ func main() {
 			continue
 		}
 
-		dataChannel.OnOpen(func() { fmt.Println("Data Channel opening") })
+		dataChannel.OnOpen(func() { fmt.Println("Data Channel opened") })
 
 		pconn.OnICEConnectionStateChange(func(connState ice.ConnectionState) {
 			fmt.Println(connState.String())
 		})
 
-		fmt.Println("Creating offer")
+		fmt.Println("Exchanging offers")
 		offer, err := pconn.CreateOffer(nil)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create offer\n")
 			continue
 		}
 		fmt.Fprintf(cconn, util.Encode(offer.Sdp)+"\n")
-
 		nin := bufio.NewScanner(bufio.NewReader(cconn))
 		nin.Split(bufio.ScanLines)
 		nin.Scan()
-		fmt.Println("Got offer from client")
 		sd := util.Decode(nin.Text())
 
 		answer := webrtc.RTCSessionDescription{
 			Type: webrtc.RTCSdpTypeAnswer,
 			Sdp:  sd,
 		}
-
 		err = pconn.SetRemoteDescription(answer)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to set remote descriptor\n")
 			continue
 		}
+
 		if admin {
 			lobby.admin = Client{control: cconn, rtcconn: pconn, channel: dataChannel}
 			admin = false

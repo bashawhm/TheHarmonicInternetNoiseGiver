@@ -22,12 +22,10 @@ func main() {
 			},
 		},
 	}
-
 	pconn, err := webrtc.New(config)
 	if err != nil {
 		panic(err)
 	}
-
 	pconn.OnICEConnectionStateChange(func(connState ice.ConnectionState) {
 		fmt.Println(connState.String())
 	})
@@ -41,7 +39,6 @@ func main() {
 	nin := bufio.NewScanner(bufio.NewReader(sconn))
 	nin.Split(bufio.ScanLines)
 	nin.Scan()
-
 	sd := util.Decode(nin.Text())
 	fmt.Println("DECODED")
 
@@ -49,7 +46,6 @@ func main() {
 		Type: webrtc.RTCSdpTypeOffer,
 		Sdp:  string(sd),
 	}
-
 	err = pconn.SetRemoteDescription(offer)
 	if err != nil {
 		panic(err)
@@ -63,7 +59,7 @@ func main() {
 
 	pconn.OnDataChannel(func(d *webrtc.RTCDataChannel) {
 		d.OnOpen(func() {
-			fmt.Println("Opened dada connection to server")
+			fmt.Println("Opened data connection to server")
 		})
 
 		d.OnMessage(func(payload datachannel.Payload) {
