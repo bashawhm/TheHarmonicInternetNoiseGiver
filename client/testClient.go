@@ -3,7 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"net"
+	"os"
+	"strconv"
+	"time"
 
 	"github.com/pions/webrtc"
 	"github.com/pions/webrtc/examples/util"
@@ -12,6 +16,7 @@ import (
 )
 
 func main() {
+	rand.Seed(int64(time.Now().Nanosecond()))
 	fmt.Println("THING TEST CLIENT STARTED...")
 
 	webrtc.RegisterDefaultCodecs()
@@ -57,6 +62,11 @@ func main() {
 	}
 	fmt.Fprintf(sconn, util.Encode(answer.Sdp)+"\n")
 
+	f, err := os.Create("/tmp/wav-" + strconv.Itoa(rand.Int()) + ".wav")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
 	pconn.OnDataChannel(func(d *webrtc.RTCDataChannel) {
 		d.OnOpen(func() {
 			fmt.Println("Opened data connection to server")
@@ -65,9 +75,11 @@ func main() {
 		d.OnMessage(func(payload datachannel.Payload) {
 			switch p := payload.(type) {
 			case *datachannel.PayloadString:
-				fmt.Printf("Message '%s' from DataChannel '%s' payload '%s'\n", p.PayloadType().String(), d.Label, string(p.Data))
+				// fmt.Printf("Message '%s' from DataChannel '%s' payload '%s'\n", p.PayloadType().String(), d.Label, string(p.Data))
+				f.Write(p.Data)
 			case *datachannel.PayloadBinary:
-				fmt.Printf("Message '%s' from DataChannel '%s' payload '% 02x'\n", p.PayloadType().String(), d.Label, p.Data)
+				// fmt.Printf("Message '%s' from DataChannel '%s' payload '% 02x'\n", p.PayloadType().String(), d.Label, p.Data)
+				f.Write(p.Data)
 			default:
 				fmt.Printf("Message '%s' from DataChannel '%s' no payload \n", p.PayloadType().String(), d.Label)
 			}

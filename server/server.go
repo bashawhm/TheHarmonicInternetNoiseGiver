@@ -77,10 +77,33 @@ func (lobby *Lobby) syncPause() string {
 }
 */
 
-func (lobby *Lobby) massSend(msg string) {
+func (lobby *Lobby) msgSend(msg string) {
 	clients := lobby.getClients()
 	for _, client := range clients {
 		client.channel.Send(datachannel.PayloadString{Data: []byte(msg)})
+	}
+}
+
+func (lobby *Lobby) fileSend(file *os.File) {
+	clients := lobby.getClients()
+	fileStat, _ := file.Stat()
+	var fileData []byte = make([]byte, fileStat.Size())
+	file.Read(fileData)
+	for _, client := range clients {
+		for i := 0; i < len(fileData); i += 1000 {
+			if (i + 1000) > len(fileData) {
+				err := client.channel.Send(datachannel.PayloadString{Data: fileData[i:]})
+				if err != nil {
+					panic(err)
+				}
+			} else {
+				err := client.channel.Send(datachannel.PayloadString{Data: fileData[i : i+1000]})
+				time.Sleep(time.Microsecond * 50) //May need to be higher on slower networks
+				if err != nil {
+					panic(err)
+				}
+			}
+		}
 	}
 }
 
@@ -103,7 +126,9 @@ func main() {
 		cin.Split(bufio.ScanLines)
 		for {
 			cin.Scan()
-			lobby.massSend(cin.Text())
+			// lobby.msgSend(cin.Text())
+			f, _ := os.Open(cin.Text())
+			lobby.fileSend(f)
 		}
 	}()
 
@@ -129,7 +154,8 @@ func main() {
 		}
 		defer pconn.Close()
 		maxRetrans := uint16(8)
-		dataChannel, err := pconn.CreateDataChannel("audio", &webrtc.RTCDataChannelInit{MaxRetransmits: &maxRetrans})
+		proto := ""
+		dataChannel, err := pconn.CreateDataChannel("audio", &webrtc.RTCDataChannelInit{MaxRetransmits: &maxRetrans, Protocol: &proto})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create data channel\n")
 			continue
