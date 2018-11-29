@@ -189,6 +189,7 @@ func main() {
 		cconn, err := ln.Accept()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to accept connection")
+			cconn.Close()
 			continue
 		}
 		nin := bufio.NewScanner(bufio.NewReader(cconn))
