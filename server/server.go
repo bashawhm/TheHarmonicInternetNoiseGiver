@@ -36,6 +36,7 @@ type Lobby struct {
 	admin     Client
 	users     []Client
 	songQueue []Song
+	newUsers  chan Client
 }
 
 func (lobby *Lobby) promoteUser(user Client) {
@@ -90,19 +91,78 @@ func (lobby *Lobby) fileSend(file *os.File) {
 	var fileData []byte = make([]byte, fileStat.Size())
 	file.Read(fileData)
 	for _, client := range clients {
+		//Tell glient begining of file
+		fmt.Fprintf(client.control, "SEND\n")
 		for i := 0; i < len(fileData); i += 1000 {
 			if (i + 1000) > len(fileData) {
-				err := client.channel.Send(datachannel.PayloadString{Data: fileData[i:]})
+				err := client.channel.Send(datachannel.PayloadBinary{Data: fileData[i:]})
 				if err != nil {
 					panic(err)
 				}
 			} else {
-				err := client.channel.Send(datachannel.PayloadString{Data: fileData[i : i+1000]})
+				err := client.channel.Send(datachannel.PayloadBinary{Data: fileData[i : i+1000]})
 				time.Sleep(time.Microsecond * 50) //May need to be higher on slower networks
 				if err != nil {
 					panic(err)
 				}
 			}
+		}
+		//Tell client end of file
+		fmt.Fprintf(client.control, "DONE\n")
+	}
+}
+
+func createClient(config webrtc.RTCConfiguration, userName string, conn net.Conn, mod bool) Client {
+	//Handle webRTC stuff
+	pconn, err := webrtc.New(config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create new connection\n")
+		panic(err)
+	}
+
+	dataChannel, err := pconn.CreateDataChannel("audio", nil)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create data channel\n")
+		panic(err)
+	}
+
+	dataChannel.OnOpen(func() { fmt.Println("Data Channel opened to " + userName) })
+	pconn.OnICEConnectionStateChange(func(connState ice.ConnectionState) {
+		// fmt.Println(userName + " " + connState.String())
+	})
+
+	// fmt.Println("Exchanging offers")
+	offer, err := pconn.CreateOffer(nil)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create offer\n")
+		panic(err)
+	}
+	fmt.Fprintf(conn, util.Encode(offer.Sdp)+"\n")
+	nin := bufio.NewScanner(bufio.NewReader(conn))
+	nin.Split(bufio.ScanLines)
+	nin.Scan()
+	sd := util.Decode(nin.Text())
+
+	answer := webrtc.RTCSessionDescription{
+		Type: webrtc.RTCSdpTypeAnswer,
+		Sdp:  sd,
+	}
+	err = pconn.SetRemoteDescription(answer)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to set remote descriptor\n")
+		panic(err)
+	}
+
+	return Client{username: userName, control: conn, rtcconn: pconn, channel: dataChannel, moderator: mod}
+}
+
+func (lobby *Lobby) lobbyHandler() {
+	for {
+		select {
+		case newUser := <-lobby.newUsers:
+			lobby.users = append(lobby.users, newUser)
+		default:
+			// fmt.Println(lobby)
 		}
 	}
 }
@@ -118,82 +178,41 @@ func main() {
 		},
 	}
 
-	var lobby Lobby = Lobby{name: "Testing lobby"}
-
-	//Testing function
-	go func() {
-		cin := bufio.NewScanner(os.Stdin)
-		cin.Split(bufio.ScanLines)
-		for {
-			cin.Scan()
-			// lobby.msgSend(cin.Text())
-			f, _ := os.Open(cin.Text())
-			lobby.fileSend(f)
-		}
-	}()
-
+	var lobbies []Lobby
 	ln, err := net.Listen("tcp", "localhost:9000")
-	var admin bool = true
+	if err != nil {
+		panic(err)
+	}
 	for {
-		fmt.Println("Accepting control connections...")
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to get connection")
-			continue
-		}
+	start:
+		fmt.Println("Accepting control connection...")
 		cconn, err := ln.Accept()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to accept connection")
 			continue
 		}
-
-		//Create a new WebRTC peer Connection
-		pconn, err := webrtc.New(config)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to create new connection\n")
-			continue
-		}
-		defer pconn.Close()
-		maxRetrans := uint16(8)
-		proto := ""
-		dataChannel, err := pconn.CreateDataChannel("audio", &webrtc.RTCDataChannelInit{MaxRetransmits: &maxRetrans, Protocol: &proto})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to create data channel\n")
-			continue
-		}
-
-		dataChannel.OnOpen(func() { fmt.Println("Data Channel opened") })
-
-		pconn.OnICEConnectionStateChange(func(connState ice.ConnectionState) {
-			fmt.Println(connState.String())
-		})
-
-		fmt.Println("Exchanging offers")
-		offer, err := pconn.CreateOffer(nil)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to create offer\n")
-			continue
-		}
-		fmt.Fprintf(cconn, util.Encode(offer.Sdp)+"\n")
 		nin := bufio.NewScanner(bufio.NewReader(cconn))
-		nin.Split(bufio.ScanLines)
+		nin.Split(bufio.ScanWords)
+		//Format:
+		//LOBBYNAME USERNAME
 		nin.Scan()
-		sd := util.Decode(nin.Text())
-
-		answer := webrtc.RTCSessionDescription{
-			Type: webrtc.RTCSdpTypeAnswer,
-			Sdp:  sd,
+		lobbyName := nin.Text()
+		for i := 0; i < len(lobbies); i++ {
+			if lobbies[i].name == lobbyName {
+				nin.Scan()
+				select {
+				case lobbies[i].newUsers <- createClient(config, nin.Text(), cconn, false):
+				default:
+					fmt.Println("Channel Full, rejecting user")
+				}
+				goto start //Sorry, but it really is the simplest solution
+			}
 		}
-		err = pconn.SetRemoteDescription(answer)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to set remote descriptor\n")
-			continue
-		}
-
-		if admin {
-			lobby.admin = Client{control: cconn, rtcconn: pconn, channel: dataChannel}
-			admin = false
-		} else {
-			lobby.users = append(lobby.users, Client{control: cconn, rtcconn: pconn, channel: dataChannel})
-		}
+		//If the lobby doesn't exist, create it and spawn handler
+		nin.Scan()
+		newChan := make(chan Client, 25)
+		newLobby := Lobby{name: lobbyName, admin: createClient(config, nin.Text(), cconn, true), newUsers: newChan}
+		lobbies = append(lobbies, newLobby)
+		go lobbies[len(lobbies)-1].lobbyHandler()
 	}
 }

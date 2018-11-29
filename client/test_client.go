@@ -27,6 +27,7 @@ func main() {
 			},
 		},
 	}
+
 	pconn, err := webrtc.New(config)
 	if err != nil {
 		panic(err)
@@ -41,6 +42,13 @@ func main() {
 		panic(err)
 	}
 	defer sconn.Close()
+
+	if len(os.Args) > 1 {
+		fmt.Fprintf(sconn, "TESTLOBBY "+os.Args[1]+"\n")
+	} else {
+		fmt.Fprintf(sconn, "TESTLOBBY TESTUSER\n")
+	}
+
 	nin := bufio.NewScanner(bufio.NewReader(sconn))
 	nin.Split(bufio.ScanLines)
 	nin.Scan()
@@ -62,7 +70,7 @@ func main() {
 	}
 	fmt.Fprintf(sconn, util.Encode(answer.Sdp)+"\n")
 
-	f, err := os.Create("/tmp/wav-" + strconv.Itoa(rand.Int()) + ".wav")
+	f, err := os.Create("/tmp/song-" + strconv.Itoa(rand.Int()) + ".wav")
 	if err != nil {
 		panic(err)
 	}
@@ -85,6 +93,5 @@ func main() {
 			}
 		})
 	})
-
 	select {}
 }
