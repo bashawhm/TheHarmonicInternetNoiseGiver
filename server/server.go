@@ -108,7 +108,7 @@ func (lobby *Lobby) fileSend(file *os.File) {
 			}
 		}
 		//Tell client end of file
-		fmt.Fprintf(client.control, "DONE\n")
+		fmt.Fprintf(client.control, "OKAY\n")
 	}
 }
 
@@ -197,11 +197,25 @@ func main() {
 		//LOBBYNAME USERNAME
 		nin.Scan()
 		lobbyName := nin.Text()
+		nin.Scan()
+		username := nin.Text()
+		//Check if username is taken
+		for i := 0; i < len(lobbies); i++ {
+			clients := lobbies[i].getClients()
+			for j := 0; j < len(clients); j++ {
+				if clients[j].username == username {
+					fmt.Fprintf(cconn, username+" TAKEN\n")
+					cconn.Close()
+					goto start
+				}
+			}
+		}
+		fmt.Fprintf(cconn, "OKAY\n")
+
 		for i := 0; i < len(lobbies); i++ {
 			if lobbies[i].name == lobbyName {
-				nin.Scan()
 				select {
-				case lobbies[i].newUsers <- createClient(config, nin.Text(), cconn, false):
+				case lobbies[i].newUsers <- createClient(config, username, cconn, false):
 				default:
 					fmt.Println("Channel Full, rejecting user")
 				}
@@ -209,9 +223,8 @@ func main() {
 			}
 		}
 		//If the lobby doesn't exist, create it and spawn handler
-		nin.Scan()
 		newChan := make(chan Client, 25)
-		newLobby := Lobby{name: lobbyName, admin: createClient(config, nin.Text(), cconn, true), newUsers: newChan}
+		newLobby := Lobby{name: lobbyName, admin: createClient(config, username, cconn, true), newUsers: newChan}
 		lobbies = append(lobbies, newLobby)
 		go lobbies[len(lobbies)-1].lobbyHandler()
 	}
