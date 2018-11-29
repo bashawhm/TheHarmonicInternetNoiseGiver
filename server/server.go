@@ -33,7 +33,7 @@ type Song struct {
 
 type Client struct {
 	control       net.Conn                  //Defines the control channel
-	rtcconn       *webrtc.RTCPeerConnection //Defines the webRTC connection used for managing
+	rtcconn       *webrtc.RTCPeerConnection //Defines the webRTC connection used for managing data channel
 	channel       *webrtc.RTCDataChannel    //Defines the webrtc data channel used for file transfer
 	username      string
 	moderator     bool
@@ -179,6 +179,8 @@ func (lobby *Lobby) lobbyHandler() {
 	for {
 		select {
 		case newUser := <-lobby.newUsers:
+			//TODO: The server should now send a join request to the Admin and moderators
+			//and if they accept then do the following lines
 			lobby.users = append(lobby.users, newUser)
 		default:
 			// fmt.Println(lobby)
@@ -234,8 +236,6 @@ func main() {
 
 		for i := 0; i < len(lobbies); i++ {
 			if lobbies[i].name == lobbyName {
-				//TODO: The server should now send a join request to the Admin and moderators
-				//and if they accept then do the following lines
 				select {
 				case lobbies[i].newUsers <- createClient(config, username, cconn, false):
 				default:

@@ -1,6 +1,5 @@
 THING Control Protocol	v1.0
-Informal RFC in Progress
-Work In Progress
+RFC Work in Progress
 ============================
 
 1	Estabolishing A Connection
@@ -30,6 +29,24 @@ Work In Progress
 		lobby and is ready to serve requests.
 
 2	Server Commands
+
+	NOTIFY <message>
+
+		The NOTIFY command is used to send notifications to their respective
+		clients. When an administrator or moderator gets a notification the
+		server will send the notification in the message field of this command.
+
+	UPDATE <song title> <artist> <tag1> <tag2>
+
+		The UPDATE command is used to inform the clients of changes to the meta
+		data of the song that has the title <song title>.
+
+	PIMG
+
+		The PING command is used for the server to moniter the network round
+		trip time for each individual client. When the server sends out a PING
+		packet, the client will then respond with an OKAY. This delay/round trip
+		time will then be used to synchronize the audio playback.
 
 	SEND <title> <artist> <tag1> <tag2>
 
