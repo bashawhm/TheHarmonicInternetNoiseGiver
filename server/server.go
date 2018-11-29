@@ -19,7 +19,7 @@ const DEBUGLEVEL = 1
 func debugPrintln(debugLevel int, a ...interface{}) {
 	if DEBUGLEVEL >= debugLevel {
 		fmt.Print("[" + time.Now().Format("15:04:05") + "] ")
-		fmt.Println(a)
+		fmt.Println(a...)
 	}
 }
 
