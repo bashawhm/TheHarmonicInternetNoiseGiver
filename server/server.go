@@ -234,6 +234,8 @@ func main() {
 
 		for i := 0; i < len(lobbies); i++ {
 			if lobbies[i].name == lobbyName {
+				//TODO: The server should now send a join request to the Admin and moderators
+				//and if they accept then do the following lines
 				select {
 				case lobbies[i].newUsers <- createClient(config, username, cconn, false):
 				default:

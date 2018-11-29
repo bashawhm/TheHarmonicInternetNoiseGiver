@@ -1,23 +1,109 @@
-THING Control Protocol	v0.1
+THING Control Protocol	v1.0
 Informal RFC in Progress
 Work In Progress
 ============================
 
-When a THING client connects to the server it will send the
-following command:
+1	Estabolishing A Connection
 
-<lobby name> <username>
+	When a THING client connects to the server it will send the
+	following commands:
 
-Usernames and lobby names must be all one word!
+	<lobby name> <username>
 
-This will cause the server to add this user (with this username)
-to the lobby of that name and more so if that lobby doesn't exist,
-it will be created. If the server creates a lobby this client will
-become the Administrator. If the Username is taken the server will 
-send the following to the client and reject the connection:
+		Usernames and lobby names must be all one word!
 
-<username> TAKEN
+		This will cause the server to add this user (with this username)
+		to the lobby of that name and more so if that lobby doesn't exist,
+		it will be created. If the server creates a lobby this client will
+		become the Administrator. 
+		
+		If the Username is taken the server will send the following to the
+		client and terminate the connection:
 
-If the server accepts the username it will send back the following:
+	<username> TAKEN
 
-OKAY
+		If the server accepts the username it will send back the following:
+
+	OKAY
+
+		Once this passes the server will have recorded the client into the
+		lobby and is ready to serve requests.
+
+2	Server Commands
+
+	SEND <title> <artist> <tag1> <tag2>
+
+		The SEND command is used by the server to indicate to the client
+		that it is about to begin a file transfer over the WebRTC audio
+		channel of an audio file named <title>. The following fields are
+		optional: <artist>, <tag1>, <tag2>. 
+
+		The SEND command is imediatly followed by a series of <=1000 byte
+		"Chunks" of an audio file for reassembly on the client side. This
+		Will be followed by the usual OKAY command which should signal to
+		client to reassemble the file and store it in cache.
+
+	OKAY
+
+		The OKAY command is used by the server to tell the client that the
+		server is done with its current job and is in a good state, ready
+		to accept commands.
+
+3	Administrator Commands
+
+	ACCEPT <username>
+
+		The ACCEPT command tell the server to accept the potential users join
+		request and let them into the lobby.
+
+	SONG <title> SET
+
+		The SONG command on its own is invalid, but has a series of sub-commands
+
+		TAG1
+
+			If the Admin client sends:
+
+			SONG <title> SET TAG1 <tag>
+
+			Then the song named <title> will have its tag1 field set to <tag>
+
+		TAG2
+
+			If the Admin client sends:
+
+			SONG <title> SET TAG2 <tag>
+
+			Then the song named <title> will have its tag2 field set to <tag>
+
+		ARTIST <artist>
+
+			If the Admin client sends:
+
+			SONG <title> SET ARTIST <artist>
+
+			Then the song named <title> will have its artist field set to <artist>
+
+	SEND <title> <artist> <tag1> <tag2>
+
+		The SEND command from the administrator is very much the same as the
+		SEND command from the server, it indicates that the client wishes to
+		upload a song named <title> for distrobution. The following fields are
+		optional: <artist>, <tag1>, <tag2>. This will be followed by a series
+		of <=1000 byte "Chunks" of an audio file.
+
+	OKAY
+
+		The OKAY is used by the client to tell the server that the client is
+		done with its current job and is in a good state, ready to accept 
+		commands.
+
+4	Moderator Commands
+
+	ACCEPT <username>
+
+		The ACCEPT command tell the server to accept the potential users join
+		request and let them into the lobby.
+
+
+5	User Commands
