@@ -116,7 +116,7 @@ All fields must be one word in length unless otherwise specified.
 
 		The OKAY is used by the client to tell the server that the client is
 		done with its current job and is in a good state, ready to accept 
-		commands.
+		commands. OKAY is also a valid responce to a PING from the server.
 
 4	Moderator Commands
 
@@ -127,7 +127,14 @@ All fields must be one word in length unless otherwise specified.
 
 	OKAY
 
+		The OKAY is used by the client to tell the server that the client is
+		done with its current job and is in a good state, ready to accept 
+		commands. OKAY is also a valid responce to a PING from the server.
 
 5	User Commands
 
 	OKAY
+
+		The OKAY is used by the client to tell the server that the client is
+		done with its current job and is in a good state, ready to accept 
+		commands. OKAY is also a valid responce to a PING from the server.
