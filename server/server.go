@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"time"
@@ -194,8 +195,6 @@ func (lobby *Lobby) lobbyHandler() {
 		lobby.sendNotifications()
 		select {
 		case newUser := <-lobby.newUsers:
-			//TODO: The server should now send a join request to the Admin and moderators
-			//and if they accept then do the following lines
 			lobby.bufferedUsers = append(lobby.bufferedUsers, newUser)
 			clients := lobby.getClients()
 			debugPrintln(Dump, "Sending join notifications")
@@ -210,11 +209,31 @@ func (lobby *Lobby) lobbyHandler() {
 			lobby.users = append(lobby.users, accept)
 		default:
 			// fmt.Println(lobby)
-			//Handle all client requests
+			//Handle all client commands
 			clients := lobby.getClients()
 			for i := 0; i < len(clients); i++ {
-				var buffer []byte
+				buffer := make([]byte, 8192)
 				n, err := clients[i].control.Read(buffer)
+				if err == io.EOF {
+					debugPrintln(Info, clients[i].username+" disconnected")
+					if clients[i].username == lobby.admin.username { //Destroy lobby and disconnect everyone
+						debugPrintln(Info, "Admin disconnected, destroying lobby "+lobby.name)
+						for j := 0; j < len(clients); j++ {
+							clients[j].control.Close()
+							clients[i].rtcconn.Close()
+						}
+						for j := 0; j < len(lobby.bufferedUsers); j++ {
+							lobby.bufferedUsers[j].control.Close()
+							lobby.bufferedUsers[j].rtcconn.Close()
+						}
+						//Ideally deallocate lobby, TODO: find better way to invalidate it
+						lobby.name = ""
+						lobby.admin = Client{}
+						lobby.users = nil
+						lobby.bufferedUsers = nil
+						return
+					}
+				}
 				if err != nil {
 					debugPrintln(Spew, err)
 					continue
