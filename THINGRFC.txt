@@ -2,6 +2,8 @@ THING Control Protocol	v1.0
 RFC Work in Progress
 ============================
 
+All fields must be one word in length unless otherwise specified.
+
 1	Estabolishing A Connection
 
 	When a THING client connects to the server it will send the
@@ -35,6 +37,7 @@ RFC Work in Progress
 		The NOTIFY command is used to send notifications to their respective
 		clients. When an administrator or moderator gets a notification the
 		server will send the notification in the message field of this command.
+		The <message> can be of any length.
 
 	UPDATE <song title> <artist> <tag1> <tag2>
 
@@ -122,5 +125,9 @@ RFC Work in Progress
 		The ACCEPT command tell the server to accept the potential users join
 		request and let them into the lobby.
 
+	OKAY
+
 
 5	User Commands
+
+	OKAY
