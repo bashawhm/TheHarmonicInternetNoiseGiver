@@ -32,6 +32,18 @@ All fields must be one word in length unless otherwise specified.
 
 2	Server Commands
 
+	PLAY <song title>
+
+		The PLAY command will be sent when the admin wishes to begin song playback.
+		When the client recieves this command they will imediatly begin playback
+		of the song named <song title>.
+
+	PAUSE
+
+		The PAUSE command will be sent by the server whn the admin wishes to halt
+		the playback of the currently playing audio. When received the client will
+		imediatly halt all audio playback.
+
 	NOTIFY <message>
 
 		The NOTIFY command is used to send notifications to their respective
@@ -70,6 +82,21 @@ All fields must be one word in length unless otherwise specified.
 		to accept commands.
 
 3	Administrator Commands
+
+	PLAY <song title>
+
+		The admin sends this command to the server to begin playing the song
+		named <song title>. Note, the admin will wait until it receives the PLAY
+		command back from the server to begin playing. Sending this command alone
+		is not enough to begin playback on the admin device. This command will be 
+		responded to with the OKAY command.
+
+	PAUSE
+
+		The admin sends this command to the server to halt the audio playback. 
+		The server will respond to this with the OKAY command. The Client will
+		not pause playback upon sending this command, it will wait until the server
+		sends the PAUSE command back to the client.
 
 	ACCEPT <username>
 
