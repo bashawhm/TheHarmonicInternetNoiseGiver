@@ -101,11 +101,13 @@ All fields must be one word in length unless otherwise specified.
 	ACCEPT <username>
 
 		The ACCEPT command tell the server to accept the potential users join
-		request and let them into the lobby.
+		request and let them into the lobby. The server will respond to this with
+		and OKAY.
 
 	SONG <title> SET
 
 		The SONG command on its own is invalid, but has a series of sub-commands
+		all of which will be followed by an OKAY from the server.
 
 		TAG1
 
@@ -137,7 +139,8 @@ All fields must be one word in length unless otherwise specified.
 		SEND command from the server, it indicates that the client wishes to
 		upload a song named <title> for distrobution. The following fields are
 		optional: <artist>, <tag1>, <tag2>. This will be followed by a series
-		of <=1000 byte "Chunks" of an audio file.
+		of <=1000 byte "Chunks" of an audio file. The client will follow the 
+		data transfer with an OKAY, to signal to the server that it's done sending.
 
 	OKAY
 
@@ -150,7 +153,7 @@ All fields must be one word in length unless otherwise specified.
 	ACCEPT <username>
 
 		The ACCEPT command tell the server to accept the potential users join
-		request and let them into the lobby.
+		request and let them into the lobby. This will be responded to with OKAY.
 
 	OKAY
 
