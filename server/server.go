@@ -140,7 +140,7 @@ func (lobby *Lobby) msgSend(msg string) {
 func (lobby *Lobby) fileSend(song Song) {
 	clients := lobby.getClients()
 	fileStat, _ := song.audio.Stat()
-	var fileData []byte = make([]byte, fileStat.Size())
+	var fileData = make([]byte, fileStat.Size())
 	song.audio.Read(fileData)
 	for _, client := range clients {
 		debugPrintln(Dump, "Sending file to client "+client.username)
@@ -338,44 +338,60 @@ func THINGServer(cconn *websocket.Conn) {
 	debugPrintln(Info, "Accepting control connection...")
 	nin := bufio.NewScanner(bufio.NewReader(cconn))
 	nin.Split(bufio.ScanWords)
-	//Format:
-	//LOBBYNAME USERNAME
-	nin.Scan()
-	lobbyName := nin.Text()
-	nin.Scan()
-	username := nin.Text()
-	//Check if username is taken
-	for i := 0; i < len(lobbies); i++ {
-		clients := lobbies[i].getClients()
-		for j := 0; j < len(clients); j++ {
-			if clients[j].username == username {
-				fmt.Fprintf(cconn, username+" TAKEN\n")
-				cconn.Close()
-				lobbyMutex.Unlock()
-				return
+
+	for nin.Scan() {
+		switch nin.Text() {
+		case "LOBBY":
+			for _, lobby := range lobbies {
+				fmt.Fprintf(cconn, lobby.name+"\n")
 			}
-		}
-	}
-	fmt.Fprintf(cconn, "OKAY\n")
-	//Check if lobby exists and add user to it
-	for i := 0; i < len(lobbies); i++ {
-		if lobbies[i].name == lobbyName {
-			select {
-			case lobbies[i].newUsers <- createClient(config, username, cconn, false):
-			default:
-				fmt.Println("Channel Full, rejecting user")
+			fmt.Fprintf(cconn, "OKAY\n")
+		case "JOIN":
+			nin.Scan()
+			lobbyName := nin.Text()
+			nin.Scan()
+			username := nin.Text()
+			//Check if username is taken
+			for i := 0; i < len(lobbies); i++ {
+				clients := lobbies[i].getClients()
+				for j := 0; j < len(clients); j++ {
+					if clients[j].username == username {
+						fmt.Fprintf(cconn, username+" TAKEN\n")
+						cconn.Close()
+						lobbyMutex.Unlock()
+						return
+					}
+				}
 			}
+			//Check if lobby exists and add user to it
+			for i := 0; i < len(lobbies); i++ {
+				if lobbies[i].name == lobbyName {
+					select {
+					case lobbies[i].newUsers <- createClient(config, username, cconn, false):
+					default:
+						fmt.Println("Channel Full, rejecting user")
+					}
+					fmt.Fprintf(cconn, "OKAY\n")
+					lobbyMutex.Unlock()
+					return
+				}
+			}
+		case "CREATE":
+			//If the lobby doesn't exist, create it and spawn handler
+			nin.Scan()
+			lobbyName := nin.Text()
+			nin.Scan()
+			username := nin.Text()
+			newChan := make(chan Client, 25)
+			acceptChan := make(chan Client, 25)
+			newLobby := Lobby{name: lobbyName, admin: createClient(config, username, cconn, true), newUsers: newChan, userAccept: acceptChan}
+			lobbies = append(lobbies, newLobby)
+			go lobbies[len(lobbies)-1].lobbyHandler()
 			lobbyMutex.Unlock()
-			return
+		default:
 		}
 	}
-	//If the lobby doesn't exist, create it and spawn handler
-	newChan := make(chan Client, 25)
-	acceptChan := make(chan Client, 25)
-	newLobby := Lobby{name: lobbyName, admin: createClient(config, username, cconn, true), newUsers: newChan, userAccept: acceptChan}
-	lobbies = append(lobbies, newLobby)
-	go lobbies[len(lobbies)-1].lobbyHandler()
-	lobbyMutex.Unlock()
+
 }
 
 func main() {
