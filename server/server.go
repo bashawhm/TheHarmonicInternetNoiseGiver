@@ -294,8 +294,53 @@ func (lobby *Lobby) lobbyHandler() {
 							}
 						}
 					case "PLAY":
+						fmt.Fprintf(clients[i].control, "OKAY\n")
+						sin.Scan()
+						songTitle := sin.Text()
+						for _, s := range lobby.songQueue {
+							if s.title == songTitle {
+								//TODO: lobby.syncPlay(s)
+								break
+							}
+						}
 					case "PAUSE":
+						//lobby.syncPause()
 					case "SONG":
+						sin.Scan()
+						songTitle := sin.Text()
+						sin.Scan()
+						if sin.Text() != "SET" {
+							continue
+						}
+						sin.Scan()
+						switch sin.Text() {
+						case "ARTIST":
+							sin.Scan()
+							newArtist := sin.Text()
+							for j := 0; j < len(lobby.songQueue); j++ {
+								if lobby.songQueue[j].title == songTitle {
+									lobby.songQueue[j].artist = newArtist
+								}
+							}
+						case "TAG1":
+							sin.Scan()
+							newTag1 := sin.Text()
+							for j := 0; j < len(lobby.songQueue); j++ {
+								if lobby.songQueue[j].title == songTitle {
+									lobby.songQueue[j].tag1 = newTag1
+								}
+							}
+						case "TAG2":
+							sin.Scan()
+							newTag2 := sin.Text()
+							for j := 0; j < len(lobby.songQueue); j++ {
+								if lobby.songQueue[j].title == songTitle {
+									lobby.songQueue[j].tag2 = newTag2
+								}
+							}
+						default:
+							continue
+						}
 					case "SEND":
 					default:
 					}

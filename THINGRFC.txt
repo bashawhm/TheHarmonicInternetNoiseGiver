@@ -135,7 +135,7 @@ All fields must be one word in length unless otherwise specified.
 
 			Then the song named <title> will have its tag2 field set to <tag>
 
-		ARTIST <artist>
+		ARTIST
 
 			If the Admin client sends:
 
