@@ -357,15 +357,14 @@ func THINGServer(cconn *websocket.Conn) {
 				for j := 0; j < len(clients); j++ {
 					if clients[j].username == username {
 						fmt.Fprintf(cconn, username+" TAKEN\n")
-						cconn.Close()
-						lobbyMutex.Unlock()
-						return
+						continue
 					}
 				}
 			}
 			//Check if lobby exists and add user to it
 			for i := 0; i < len(lobbies); i++ {
 				if lobbies[i].name == lobbyName {
+					fmt.Fprintf(cconn, "OKAY\n")
 					select {
 					case lobbies[i].newUsers <- createClient(config, username, cconn, false):
 					default:
@@ -382,10 +381,18 @@ func THINGServer(cconn *websocket.Conn) {
 			lobbyName := nin.Text()
 			nin.Scan()
 			username := nin.Text()
+			for _, lobby := range lobbies {
+				if lobby.name == lobbyName {
+					fmt.Fprintf(cconn, lobbyName+" TAKEN\n")
+					continue
+				}
+			}
+			fmt.Fprintf(cconn, "OKAY\n")
 			newChan := make(chan Client, 25)
 			acceptChan := make(chan Client, 25)
 			newLobby := Lobby{name: lobbyName, admin: createClient(config, username, cconn, true), newUsers: newChan, userAccept: acceptChan}
 			lobbies = append(lobbies, newLobby)
+			fmt.Fprintf(cconn, "OKAY\n")
 			go lobbies[len(lobbies)-1].lobbyHandler()
 			lobbyMutex.Unlock()
 		default:
@@ -399,7 +406,7 @@ func main() {
 	http.Handle("/", http.FileServer(http.Dir("../client/")))
 	//Start the web socket handler
 	http.Handle("/socket", websocket.Handler(THINGServer))
-	debugPrintln(Info, "Starting HTTP and WS server on port 80")
+	debugPrintln(Info, "Starting HTTP and WS server")
 
 	//Initialization stuff
 	webrtc.RegisterDefaultCodecs()
