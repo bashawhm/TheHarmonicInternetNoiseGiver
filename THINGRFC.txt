@@ -9,21 +9,31 @@ All fields must be one word in length unless otherwise specified.
 	When a THING client connects to the server it will send the
 	following commands:
 
-	<lobby name> <username>
+	LOBBY
+
+		This command can be sent by the client to query the lobbies on the
+		server. This will be responded to with the list of lobby names followed
+		by an OKAY.
+
+	CREATE <lobby name> <username>
+
+		The lobby with <lobby name> will be created and the client will become
+		the administrator. If the lobby name is taken the following will be
+		sent followed by an OKAY:
+
+	<lobby name> TAKEN
+
+	JOIN <lobby name> <username>
 
 		Usernames and lobby names must be all one word!
 
 		This will cause the server to add this user (with this username)
-		to the lobby of that name and more so if that lobby doesn't exist,
-		it will be created. If the server creates a lobby this client will
-		become the Administrator. 
-		
+		to the lobby of that name.
+
 		If the Username is taken the server will send the following to the
-		client and terminate the connection:
+		client followed by an OKAY:
 
 	<username> TAKEN
-
-		If the server accepts the username it will send back the following:
 
 	OKAY
 
@@ -125,7 +135,7 @@ All fields must be one word in length unless otherwise specified.
 
 			Then the song named <title> will have its tag2 field set to <tag>
 
-		ARTIST <artist>
+		ARTIST
 
 			If the Admin client sends:
 
