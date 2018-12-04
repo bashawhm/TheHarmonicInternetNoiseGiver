@@ -145,10 +145,13 @@ func (lobby *Lobby) fileSend(song Song) {
 	fileStat, _ := song.audio.Stat()
 	var fileData = make([]byte, fileStat.Size())
 	song.audio.Read(fileData)
+	var packet THING
 	for _, client := range clients {
 		debugPrintln(Dump, "Sending file to client "+client.username)
 		//Tell client a transfer is starting
-		fmt.Fprintf(client.control, "SEND "+song.title+" "+song.artist+" "+song.tag1+" "+song.tag2+"\n")
+		packet.command = "SEND " + song.title + " " + song.artist + " " + song.tag1 + " " + song.tag2 + "\n"
+		websocket.JSON.Send(client.control, packet)
+		// fmt.Fprintf(client.control, "SEND "+song.title+" "+song.artist+" "+song.tag1+" "+song.tag2+"\n")
 		//Transfer in >=1000 byte chunks because of the limits of WebRTC
 		for i := 0; i < len(fileData); i += 1000 {
 			if (i + 1000) > len(fileData) { //The last set of bytes in the file
@@ -165,7 +168,8 @@ func (lobby *Lobby) fileSend(song Song) {
 			}
 		}
 		//Tell client end of transmision
-		fmt.Fprintf(client.control, "OKAY\n")
+		packet.command = "OKAY\n"
+		websocket.JSON.Send(client.control, packet)
 	}
 }
 
