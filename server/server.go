@@ -151,7 +151,6 @@ func (lobby *Lobby) fileSend(song Song) {
 		//Tell client a transfer is starting
 		packet.command = "SEND " + song.title + " " + song.artist + " " + song.tag1 + " " + song.tag2 + "\n"
 		websocket.JSON.Send(client.control, packet)
-		// fmt.Fprintf(client.control, "SEND "+song.title+" "+song.artist+" "+song.tag1+" "+song.tag2+"\n")
 		//Transfer in >=1000 byte chunks because of the limits of WebRTC
 		for i := 0; i < len(fileData); i += 1000 {
 			if (i + 1000) > len(fileData) { //The last set of bytes in the file
@@ -210,11 +209,6 @@ func createClient(config webrtc.RTCConfiguration, userName string, conn *websock
 	var packet THING
 	packet.command = offer.Sdp
 	websocket.JSON.Send(conn, packet)
-	// fmt.Fprintf(conn, util.Encode(offer.Sdp)+"\n")
-	// nin := bufio.NewScanner(bufio.NewReader(conn))
-	// nin.Split(bufio.ScanLines)
-	// nin.Scan()
-	// sd := util.Decode(nin.Text())
 	websocket.JSON.Receive(conn, &packet)
 	sd := packet.command
 
@@ -286,7 +280,11 @@ func (lobby *Lobby) lobbyHandler() {
 					continue
 				}
 				var input THING
-				json.Unmarshal(buffer, &input)
+				err = json.Unmarshal(buffer, &input)
+				if err != nil {
+					debugPrintln(Info, err)
+					continue
+				}
 				//If we get here there are no network errors
 				sin := bufio.NewScanner(strings.NewReader(input.command))
 				sin.Split(bufio.ScanWords)
@@ -297,7 +295,11 @@ func (lobby *Lobby) lobbyHandler() {
 					sin.Scan()
 					switch sin.Text() {
 					case "ACCEPT":
-						sin.Scan()
+						res := sin.Scan()
+						if !res {
+							debugPrintln(Dump, sin.Err())
+							continue
+						}
 						user := sin.Text()
 						for j := 0; j < len(lobby.bufferedUsers); i++ {
 							if lobby.bufferedUsers[j].username == user {
@@ -312,7 +314,11 @@ func (lobby *Lobby) lobbyHandler() {
 					case "PLAY":
 						packet.command = "OKAY\n"
 						websocket.JSON.Send(clients[i].control, packet)
-						sin.Scan()
+						res := sin.Scan()
+						if !res {
+							debugPrintln(Dump, sin.Err())
+							continue
+						}
 						songTitle := sin.Text()
 						for _, s := range lobby.songQueue {
 							if s.title == songTitle {
@@ -323,16 +329,32 @@ func (lobby *Lobby) lobbyHandler() {
 					case "PAUSE":
 						//lobby.syncPause()
 					case "SONG":
-						sin.Scan()
+						res := sin.Scan()
+						if !res {
+							debugPrintln(Dump, sin.Err())
+							continue
+						}
 						songTitle := sin.Text()
-						sin.Scan()
+						res = sin.Scan()
+						if !res {
+							debugPrintln(Dump, sin.Err())
+							continue
+						}
 						if sin.Text() != "SET" {
 							continue
 						}
-						sin.Scan()
+						res = sin.Scan()
+						if !res {
+							debugPrintln(Dump, sin.Err())
+							continue
+						}
 						switch sin.Text() {
 						case "ARTIST":
-							sin.Scan()
+							res := sin.Scan()
+							if !res {
+								debugPrintln(Dump, sin.Err())
+								continue
+							}
 							newArtist := sin.Text()
 							for j := 0; j < len(lobby.songQueue); j++ {
 								if lobby.songQueue[j].title == songTitle {
@@ -340,7 +362,11 @@ func (lobby *Lobby) lobbyHandler() {
 								}
 							}
 						case "TAG1":
-							sin.Scan()
+							res := sin.Scan()
+							if !res {
+								debugPrintln(Dump, sin.Err())
+								continue
+							}
 							newTag1 := sin.Text()
 							for j := 0; j < len(lobby.songQueue); j++ {
 								if lobby.songQueue[j].title == songTitle {
@@ -348,7 +374,11 @@ func (lobby *Lobby) lobbyHandler() {
 								}
 							}
 						case "TAG2":
-							sin.Scan()
+							res := sin.Scan()
+							if !res {
+								debugPrintln(Dump, sin.Err())
+								continue
+							}
 							newTag2 := sin.Text()
 							for j := 0; j < len(lobby.songQueue); j++ {
 								if lobby.songQueue[j].title == songTitle {
@@ -363,9 +393,17 @@ func (lobby *Lobby) lobbyHandler() {
 					}
 				} else if clients[i].moderator { //If sent from a moderator
 					//If accepting users move them from bufferedUsers to userAccept channel
-					sin.Scan()
+					res := sin.Scan()
+					if !res {
+						debugPrintln(Dump, sin.Err())
+						continue
+					}
 					if sin.Text() == "ACCEPT" {
-						sin.Scan()
+						res := sin.Scan()
+						if !res {
+							debugPrintln(Dump, sin.Err())
+							continue
+						}
 						user := sin.Text()
 						for j := 0; j < len(lobby.bufferedUsers); i++ {
 							if lobby.bufferedUsers[j].username == user {
@@ -414,9 +452,17 @@ func THINGServer(cconn *websocket.Conn) {
 			packet.command = "OKAY\n"
 			websocket.JSON.Send(cconn, packet)
 		case "JOIN":
-			nin.Scan()
+			res := nin.Scan()
+			if !res {
+				debugPrintln(Dump, nin.Err())
+				continue
+			}
 			lobbyName := nin.Text()
-			nin.Scan()
+			res = nin.Scan()
+			if !res {
+				debugPrintln(Dump, nin.Err())
+				continue
+			}
 			username := nin.Text()
 			//Check if username is taken
 			for i := 0; i < len(lobbies); i++ {
@@ -447,9 +493,17 @@ func THINGServer(cconn *websocket.Conn) {
 			}
 		case "CREATE":
 			//If the lobby doesn't exist, create it and spawn handler
-			nin.Scan()
+			res := nin.Scan()
+			if !res {
+				debugPrintln(Dump, nin.Err())
+				continue
+			}
 			lobbyName := nin.Text()
-			nin.Scan()
+			res = nin.Scan()
+			if !res {
+				debugPrintln(Dump, nin.Err())
+				continue
+			}
 			username := nin.Text()
 			for _, lobby := range lobbies {
 				if lobby.name == lobbyName {
