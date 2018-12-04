@@ -4,7 +4,7 @@ RFC Work in Progress
 
 All fields must be one word in length unless otherwise specified.
 
-1	Estabolishing A Connection
+1	Establishing A Connection
 
 	When a THING client connects to the server it will send the
 	following commands:
