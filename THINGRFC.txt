@@ -66,7 +66,7 @@ All fields must be one word in length unless otherwise specified.
 		The UPDATE command is used to inform the clients of changes to the meta
 		data of the song that has the title <song title>.
 
-	PIMG
+	PING
 
 		The PING command is used for the server to moniter the network round
 		trip time for each individual client. When the server sends out a PING
