@@ -215,7 +215,7 @@ func createClient(config webrtc.RTCConfiguration, userName string, conn *websock
 	// nin.Split(bufio.ScanLines)
 	// nin.Scan()
 	// sd := util.Decode(nin.Text())
-	websocket.JSON.Receive(conn, packet)
+	websocket.JSON.Receive(conn, &packet)
 	sd := packet.command
 
 	answer := webrtc.RTCSessionDescription{
