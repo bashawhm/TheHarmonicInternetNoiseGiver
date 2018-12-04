@@ -58,7 +58,7 @@ type Client struct {
 	username      string
 	moderator     bool
 	notifications []string
-	delay         time.Time
+	delay         time.Duration
 }
 
 //Lobby is the server-side representation of a collection of clients and songs
@@ -102,32 +102,56 @@ func (lobby *Lobby) getClients() []Client {
 	return clients
 }
 
-/*
+
 func (client *Client) updateDelayTime() {
 	t1 := time.Now()
-	//TODO: Ping Client
-
+	var packet THING
+	packet.Command = "PING\n"
+	websocket.JSON.Send(client.control, packet)
+	websocket.JSON.Receive(client.control, &packet)
 	t2 := time.Now()
 	diff := t2.Sub(t1)
 	client.delay = diff
 }
 
-func (lobby *Lobby) pushSong(song Song) string {
+func (lobby *Lobby) pushSong(song Song) {
 	lobby.fileSend(song)
 }
 
-func (lobby *Lobby) syncPlay(song Song) string {
-
+func (lobby *Lobby) syncPlay(song Song) {
+	clients := lobby.getClients()
+	for i := 0; i < len(clients); i++{
+		clients[i].updateDelayTime()
+	}
+	var packet THING
+	packet.Command = "PLAY " + song.title + "\n"
+	for j := 0; j < len(clients); j++{
+		go func(){
+			time.Sleep(clients[j].delay)
+			websocket.JSON.Send(clients[j].control, packet)
+			}()
+	}
 }
 
-func (lobby *Lobby) syncPause() string {
-
+func (lobby *Lobby) syncPause() {
+	clients := lobby.getClients()
+	for i := 0; i < len(clients); i++{
+		clients[i].updateDelayTime()
+	}
+	var packet THING
+	packet.Command = "PAUSE\n"
+	for j := 0; j < len(clients); j++{
+		go func(){
+			time.Sleep(clients[j].delay)
+			websocket.JSON.Send(clients[j].control, packet)
+			}()
+	}
 }
 
 func (lobby *Lobby) sendNotifications() {
 
 }
-*/
+
 /*
 TODO: Remove this
 func (lobby *Lobby) msgSend(msg string) {
