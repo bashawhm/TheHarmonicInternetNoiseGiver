@@ -73,7 +73,7 @@ type Lobby struct {
 }
 
 type THING struct {
-	command string
+	Command string `json:"command"`
 }
 
 //Promotes a user to moderator
@@ -149,7 +149,7 @@ func (lobby *Lobby) fileSend(song Song) {
 	for _, client := range clients {
 		debugPrintln(Dump, "Sending file to client "+client.username)
 		//Tell client a transfer is starting
-		packet.command = "SEND " + song.title + " " + song.artist + " " + song.tag1 + " " + song.tag2 + "\n"
+		packet.Command = "SEND " + song.title + " " + song.artist + " " + song.tag1 + " " + song.tag2 + "\n"
 		websocket.JSON.Send(client.control, packet)
 		//Transfer in >=1000 byte chunks because of the limits of WebRTC
 		for i := 0; i < len(fileData); i += 1000 {
@@ -167,7 +167,7 @@ func (lobby *Lobby) fileSend(song Song) {
 			}
 		}
 		//Tell client end of transmision
-		packet.command = "OKAY\n"
+		packet.Command = "OKAY\n"
 		websocket.JSON.Send(client.control, packet)
 	}
 }
@@ -207,10 +207,10 @@ func createClient(config webrtc.RTCConfiguration, userName string, conn *websock
 		panic(err)
 	}
 	var packet THING
-	packet.command = offer.Sdp
+	packet.Command = offer.Sdp
 	websocket.JSON.Send(conn, packet)
 	websocket.JSON.Receive(conn, &packet)
-	sd := packet.command
+	sd := packet.Command
 
 	answer := webrtc.RTCSessionDescription{
 		Type: webrtc.RTCSdpTypeAnswer,
@@ -246,7 +246,7 @@ func (lobby *Lobby) lobbyHandler() {
 		case accept := <-lobby.userAccept:
 			debugPrintln(Dump, accept.username+" Joinging "+lobby.name)
 			lobby.users = append(lobby.users, accept)
-		//Handle all client commands
+		//Handle all client Commands
 		default:
 			clients := lobby.getClients()
 			for i := 0; i < len(clients); i++ {
@@ -286,13 +286,17 @@ func (lobby *Lobby) lobbyHandler() {
 					continue
 				}
 				//If we get here there are no network errors
-				sin := bufio.NewScanner(strings.NewReader(input.command))
+				sin := bufio.NewScanner(strings.NewReader(input.Command))
 				sin.Split(bufio.ScanWords)
 				var packet THING
 				//Something was read, handle connection in a non blocking way
 				if lobby.admin.username == clients[i].username { //If send from admin
 					//If accepting users move them from bufferedUsers to userAccept channel
-					sin.Scan()
+					res := sin.Scan()
+					if !res {
+						debugPrintln(Dump, sin.Err())
+						continue
+					}
 					switch sin.Text() {
 					case "ACCEPT":
 						res := sin.Scan()
@@ -306,13 +310,13 @@ func (lobby *Lobby) lobbyHandler() {
 								lobby.userAccept <- lobby.bufferedUsers[j]
 								//Remove Client from buffer
 								lobby.bufferedUsers = append(lobby.bufferedUsers[:j], lobby.bufferedUsers[j+1:]...)
-								packet.command = "OKAY\n"
+								packet.Command = "OKAY\n"
 								websocket.JSON.Send(clients[i].control, packet)
 								break
 							}
 						}
 					case "PLAY":
-						packet.command = "OKAY\n"
+						packet.Command = "OKAY\n"
 						websocket.JSON.Send(clients[i].control, packet)
 						res := sin.Scan()
 						if !res {
@@ -410,7 +414,7 @@ func (lobby *Lobby) lobbyHandler() {
 								lobby.userAccept <- lobby.bufferedUsers[j]
 								//Remove Client from buffer
 								lobby.bufferedUsers = append(lobby.bufferedUsers[:j], lobby.bufferedUsers[j+1:]...)
-								packet.command = "OKAY\n"
+								packet.Command = "OKAY\n"
 								websocket.JSON.Send(clients[i].control, packet)
 								break
 							}
@@ -438,18 +442,23 @@ func THINGServer(cconn *websocket.Conn) {
 
 	debugPrintln(Info, "Accepting control connection...")
 	var input THING
-	websocket.JSON.Receive(cconn, &input)
-	nin := bufio.NewScanner(strings.NewReader(input.command))
+	err := websocket.JSON.Receive(cconn, &input)
+	if err != nil {
+		debugPrintln(Dump, err)
+		return
+	}
+	// fmt.Println(input)
+	nin := bufio.NewScanner(strings.NewReader(input.Command))
 	nin.Split(bufio.ScanWords)
 	var packet THING
 	for nin.Scan() {
 		switch nin.Text() {
 		case "LOBBY":
 			for _, lobby := range lobbies {
-				packet.command = lobby.name + "\n"
+				packet.Command = lobby.name + "\n"
 				websocket.JSON.Send(cconn, packet)
 			}
-			packet.command = "OKAY\n"
+			packet.Command = "OKAY\n"
 			websocket.JSON.Send(cconn, packet)
 		case "JOIN":
 			res := nin.Scan()
@@ -469,7 +478,7 @@ func THINGServer(cconn *websocket.Conn) {
 				clients := lobbies[i].getClients()
 				for j := 0; j < len(clients); j++ {
 					if clients[j].username == username {
-						packet.command = username + " TAKEN\n"
+						packet.Command = username + " TAKEN\n"
 						websocket.JSON.Send(cconn, packet)
 						continue
 					}
@@ -478,14 +487,14 @@ func THINGServer(cconn *websocket.Conn) {
 			//Check if lobby exists and add user to it
 			for i := 0; i < len(lobbies); i++ {
 				if lobbies[i].name == lobbyName {
-					packet.command = "OKAY\n"
+					packet.Command = "OKAY\n"
 					websocket.JSON.Send(cconn, packet)
 					select {
 					case lobbies[i].newUsers <- createClient(config, username, cconn, false):
 					default:
 						fmt.Println("Channel Full, rejecting user")
 					}
-					packet.command = "OKAY\n"
+					packet.Command = "OKAY\n"
 					websocket.JSON.Send(cconn, packet)
 					lobbyMutex.Unlock()
 					return
@@ -507,18 +516,18 @@ func THINGServer(cconn *websocket.Conn) {
 			username := nin.Text()
 			for _, lobby := range lobbies {
 				if lobby.name == lobbyName {
-					packet.command = lobbyName + " TAKEN\n"
+					packet.Command = lobbyName + " TAKEN\n"
 					websocket.JSON.Send(cconn, packet)
 					continue
 				}
 			}
-			packet.command = "OKAY\n"
+			packet.Command = "OKAY\n"
 			websocket.JSON.Send(cconn, packet)
 			newChan := make(chan Client, 25)
 			acceptChan := make(chan Client, 25)
 			newLobby := Lobby{name: lobbyName, admin: createClient(config, username, cconn, true), newUsers: newChan, userAccept: acceptChan}
 			lobbies = append(lobbies, newLobby)
-			packet.command = "OKAY\n"
+			packet.Command = "OKAY\n"
 			websocket.JSON.Send(cconn, packet)
 			go lobbies[len(lobbies)-1].lobbyHandler()
 			lobbyMutex.Unlock()
