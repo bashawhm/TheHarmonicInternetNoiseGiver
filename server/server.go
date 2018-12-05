@@ -43,7 +43,7 @@ func debugPrintln(debugLevel int, a ...interface{}) {
 
 //Song is the server-side representation of a song used to manage the songs uploaded to the lobby
 type Song struct {
-	audio  *os.File
+	audio  []byte
 	title  string
 	artist string
 	tag1   string
@@ -70,6 +70,8 @@ type Lobby struct {
 	newUsers      chan Client //Clients yet to be buffered
 	bufferedUsers []Client    //Clients buffered until accepted
 	userAccept    chan Client //Clients yet to be accepted
+	partialSong   []byte      //If there is a song sending
+	partialMut    *sync.Mutex
 }
 
 type THING struct {
@@ -102,7 +104,6 @@ func (lobby *Lobby) getClients() []Client {
 	return clients
 }
 
-
 func (client *Client) updateDelayTime() {
 	t1 := time.Now()
 	var packet THING
@@ -120,55 +121,48 @@ func (lobby *Lobby) pushSong(song Song) {
 
 func (lobby *Lobby) syncPlay(song Song) {
 	clients := lobby.getClients()
-	for i := 0; i < len(clients); i++{
+	for i := 0; i < len(clients); i++ {
 		clients[i].updateDelayTime()
 	}
 	var packet THING
 	packet.Command = "PLAY " + song.title + "\n"
-	for j := 0; j < len(clients); j++{
-		go func(){
-			time.Sleep(clients[j].delay)
-			websocket.JSON.Send(clients[j].control, packet)
-			}()
+	for j := 0; j < len(clients); j++ {
+		go func(i int) {
+			time.Sleep(clients[i].delay)
+			websocket.JSON.Send(clients[i].control, packet)
+		}(j)
 	}
 }
 
 func (lobby *Lobby) syncPause() {
 	clients := lobby.getClients()
-	for i := 0; i < len(clients); i++{
+	for i := 0; i < len(clients); i++ {
 		clients[i].updateDelayTime()
 	}
 	var packet THING
 	packet.Command = "PAUSE\n"
-	for j := 0; j < len(clients); j++{
-		go func(){
-			time.Sleep(clients[j].delay)
-			websocket.JSON.Send(clients[j].control, packet)
-			}()
+	for j := 0; j < len(clients); j++ {
+		go func(i int) {
+			time.Sleep(clients[i].delay)
+			websocket.JSON.Send(clients[i].control, packet)
+		}(j)
 	}
 }
 
 func (lobby *Lobby) sendNotifications() {
-
-}
-
-/*
-TODO: Remove this
-func (lobby *Lobby) msgSend(msg string) {
 	clients := lobby.getClients()
-	for _, client := range clients {
-		debugPrintln(Dump, "Sending "+msg+" to client "+client.username)
-		client.channel.Send(datachannel.PayloadString{Data: []byte(msg)})
+	var packet THING
+	for i := 0; i < len(clients); i++ {
+		for j := 0; j < len(clients[i].notifications); i++ {
+			packet.Command += clients[i].notifications[j] + "\n"
+		}
+		websocket.JSON.Send(clients[i].control, packet)
 	}
 }
-*/
 
 //Used to send song data to all connected clients over a WebRTC data channel
 func (lobby *Lobby) fileSend(song Song) {
 	clients := lobby.getClients()
-	fileStat, _ := song.audio.Stat()
-	var fileData = make([]byte, fileStat.Size())
-	song.audio.Read(fileData)
 	var packet THING
 	for _, client := range clients {
 		debugPrintln(Dump, "Sending file to client "+client.username)
@@ -176,14 +170,14 @@ func (lobby *Lobby) fileSend(song Song) {
 		packet.Command = "SEND " + song.title + " " + song.artist + " " + song.tag1 + " " + song.tag2 + "\n"
 		websocket.JSON.Send(client.control, packet)
 		//Transfer in >=1000 byte chunks because of the limits of WebRTC
-		for i := 0; i < len(fileData); i += 1000 {
-			if (i + 1000) > len(fileData) { //The last set of bytes in the file
-				err := client.channel.Send(datachannel.PayloadBinary{Data: fileData[i:]})
+		for i := 0; i < len(song.audio); i += 1000 {
+			if (i + 1000) > len(song.audio) { //The last set of bytes in the file
+				err := client.channel.Send(datachannel.PayloadBinary{Data: song.audio[i:]})
 				if err != nil {
 					panic(err)
 				}
 			} else {
-				err := client.channel.Send(datachannel.PayloadBinary{Data: fileData[i : i+1000]})
+				err := client.channel.Send(datachannel.PayloadBinary{Data: song.audio[i : i+1000]})
 				time.Sleep(time.Microsecond * 50) //May need to be higher on slower networks
 				if err != nil {
 					panic(err)
@@ -194,6 +188,23 @@ func (lobby *Lobby) fileSend(song Song) {
 		packet.Command = "OKAY\n"
 		websocket.JSON.Send(client.control, packet)
 	}
+}
+
+func (lobby *Lobby) fileRecv(p datachannel.Payload) {
+	lobby.partialMut.Lock()
+	var audio []byte
+	switch payload := p.(type) {
+	case *datachannel.PayloadBinary:
+		audio = append(audio, payload.Data...)
+	case *datachannel.PayloadString:
+		audio = append(audio, payload.Data...)
+	default:
+		debugPrintln(Info, "Failed to recieve song data, not binary or string")
+		debugPrintln(Dump, "Payload type "+p.PayloadType().String())
+		return
+	}
+	lobby.partialSong = append(lobby.partialSong, audio...)
+	lobby.partialMut.Unlock()
 }
 
 //Creates a Client and handles WebRTC magic
@@ -252,7 +263,7 @@ func createClient(config webrtc.RTCConfiguration, userName string, conn *websock
 //Handles all operations within the lobby
 func (lobby *Lobby) lobbyHandler() {
 	for {
-		// lobby.sendNotifications() TODO: Impliment function and uncomment
+		lobby.sendNotifications()
 		select {
 		//If a client wants to connect
 		case newUser := <-lobby.newUsers:
@@ -350,12 +361,12 @@ func (lobby *Lobby) lobbyHandler() {
 						songTitle := sin.Text()
 						for _, s := range lobby.songQueue {
 							if s.title == songTitle {
-								//TODO: lobby.syncPlay(s)
+								lobby.syncPlay(s)
 								break
 							}
 						}
 					case "PAUSE":
-						//lobby.syncPause()
+						lobby.syncPause()
 					case "SONG":
 						res := sin.Scan()
 						if !res {
@@ -417,6 +428,44 @@ func (lobby *Lobby) lobbyHandler() {
 							continue
 						}
 					case "SEND":
+						lobby.partialSong = []byte{}
+						res := sin.Scan()
+						if !res {
+							debugPrintln(Dump, "Invalid protocol: no song title on send")
+							continue
+						}
+						songTitle := sin.Text()
+						var songArtist string
+						var songTag1 string
+						var songTag2 string
+						res = sin.Scan()
+						if res {
+							songArtist = sin.Text()
+						}
+						res = sin.Scan()
+						if res {
+							songTag1 = sin.Text()
+						}
+						res = sin.Scan()
+						if res {
+							songTag2 = sin.Text()
+						}
+						//Wait for transfer to progress
+						var packet THING
+						websocket.JSON.Receive(clients[i].control, &packet)
+						//When transfer ends
+						if packet.Command != "OKAY\n" {
+							debugPrintln(Info, "Failed to get OKAY for upload: "+packet.Command)
+							continue
+						}
+						//Fill in other fields
+						var song Song
+						song.title = songTitle
+						song.artist = songArtist
+						song.tag1 = songTag1
+						song.tag2 = songTag2
+						song.audio = lobby.partialSong
+						lobby.addSongToQueue(song)
 					default:
 					}
 				} else if clients[i].moderator { //If sent from a moderator
@@ -478,8 +527,8 @@ func THINGServer(cconn *websocket.Conn) {
 	for nin.Scan() {
 		switch nin.Text() {
 		case "LOBBY":
-			for _, lobby := range lobbies {
-				packet.Command = lobby.name + "\n"
+			for i := 0; i < len(lobbies); i++ {
+				packet.Command = lobbies[i].name + "\n"
 				websocket.JSON.Send(cconn, packet)
 			}
 			packet.Command = "OKAY\n"
@@ -538,8 +587,8 @@ func THINGServer(cconn *websocket.Conn) {
 				continue
 			}
 			username := nin.Text()
-			for _, lobby := range lobbies {
-				if lobby.name == lobbyName {
+			for i := 0; i < len(lobbies); i++ {
+				if lobbies[i].name == lobbyName {
 					packet.Command = lobbyName + " TAKEN\n"
 					websocket.JSON.Send(cconn, packet)
 					continue
@@ -553,6 +602,8 @@ func THINGServer(cconn *websocket.Conn) {
 			lobbies = append(lobbies, newLobby)
 			packet.Command = "OKAY\n"
 			websocket.JSON.Send(cconn, packet)
+			lobbies[len(lobbies)-1].partialMut = new(sync.Mutex)
+			lobbies[len(lobbies)-1].admin.channel.OnMessage(lobbies[len(lobbies)-1].fileRecv)
 			go lobbies[len(lobbies)-1].lobbyHandler()
 			lobbyMutex.Unlock()
 		default:
