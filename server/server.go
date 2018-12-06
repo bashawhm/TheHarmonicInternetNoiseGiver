@@ -527,11 +527,12 @@ func THINGServer(cconn *websocket.Conn) {
 	for nin.Scan() {
 		switch nin.Text() {
 		case "LOBBY":
+			packet.Command = "" 
 			for i := 0; i < len(lobbies); i++ {
-				packet.Command = lobbies[i].name + "\n"
-				websocket.JSON.Send(cconn, packet)
+				packet.Command = packet.Command + lobbies[i].name + "\n"
 			}
-			packet.Command = "OKAY\n"
+			packet.Command = "SERVERLIST\n" + packet.Command
+			fmt.Println("Sending message:\n" + packet.Command)
 			websocket.JSON.Send(cconn, packet)
 		case "JOIN":
 			res := nin.Scan()
@@ -622,6 +623,11 @@ func main() {
 	//Initialization stuff
 	webrtc.RegisterDefaultCodecs()
 
+	lobbies = append(lobbies, Lobby{name: "JeffBezons1"})
+	lobbies = append(lobbies, Lobby{name: "JeffBezons2"})
+	lobbies = append(lobbies, Lobby{name: "JeffBezons3"})
+	lobbies = append(lobbies, Lobby{name: "JeffBezons4"})
+	lobbies = append(lobbies, Lobby{name: "JeffBezons5"})
 	//Start server
 	http.ListenAndServe(":80", nil)
 }
