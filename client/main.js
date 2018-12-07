@@ -11,6 +11,16 @@ var userNameInput = document.querySelector("#userNameInput")
 var setupLobbyBtn = document.querySelector("#createLobbyBtn")
 var createLobbyNameBtn = document.querySelector("#createLobbyNameBtn")
 var createUserNameBtn = document.querySelector("#createUsernameBtn")
+// Data structures
+var lobbies = []
+var lobbyName = ""
+var userName = ""
+var lobbyName = ""
+var audioFile = {}
+var songnames = []
+var artists = []
+var tags = []
+var clients = []
 
 setupLobbyBtn.addEventListener("click", function(){
     console.log("Hide homepage and reveal lobby name page.")
