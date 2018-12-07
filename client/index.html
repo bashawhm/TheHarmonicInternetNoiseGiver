@@ -9,32 +9,74 @@
     <script src="main.js" defer></script>
 </head>
 <body>
+    
     <article id="homepage">
         <h1>The Harmonic Internet Noise Giver</h1>
-        <button id="setup-lobby-btn">Create</button>
+        <button id="createLobbyBtn">Create</button>
         <form autocomplete="off">
             <div class="autocomplete" style="width:300px;">
-              <input id="search-lobby-input" type="text" name="myCountry" placeholder="Search lobbies...">
+              <input id="searchLobbiesInput" type="text" placeholder="Search lobbies...">
             </div>
         </form>
     </article>
-    <article id="lobbyname" hidden>
+
+    <article id="lobbynamepage" hidden>
         <h1>Setup Lobby</h1>
-        <label for="lobby_name">Name</label>
-        <input type="text" id="lobby_name">
-        <button id="create-lobby-name-btn">Submit</button>
+        <label for="lobbyNameInput">Name</label>
+        <input type="text" id="lobbyNameInput">
+        <button id="createLobbyNameBtn">Submit</button>
     </article>
-    <article id="username" hidden>
+    
+    <article id="usernamepage" hidden>
         <h1>Create Username</h1>
-        <label for="user_name">Name</label>
-        <input type="text" id="user_name">
-        <button id="create-username-btn">Submit</button>
+        <label for="userNameInput">Name</label>
+        <input type="text" id="userNameInput">
+        <button id="createUsernameBtn">Submit</button>
     </article>
-    <article id="connect-to-lobby-page" hidden>
-        <h1>Connecting to <span id="lobbynametext"></span></h1>
+    
+    <article id="waitingpage" hidden>
+        <h1>Connecting to <span id="lobbyNameField"></span></h1>
     </article>
-    <article id="lobby" hidden>
-        <h1>Lobby Page</h1>
+    
+    <article id="lobbypage" hidden>
+        <!-- Top buttons go in a nav bar here -->
+        <nav id="lobbyManagementNav">
+
+        </nav>
+        <!-- Next set of fields in a nav bar here -->
+        <nav id="lobbyAudioNav">
+            <h1><span id="lobbyNameField"></span></h1>
+
+        </nav>
+        <!-- List of song names here - data to be appeded/rendered here later -->
+        <ul id="songNames" >
+
+        </ul>
+        <!-- List of artists -->
+        <ul id="artists">
+
+        </ul>
+        <!-- List of tag1s -->
+        <ul id="tags1">
+
+        </ul>
+        <!-- List of tag2s -->
+        <ul id="tags2">
+
+        </ul>
     </article>
+
+    <article id="memberspage" hidden>
+
+    </article>
+
+    <article id="joinrequestspage" hidden>
+
+    </article>
+
+    <article id="settingspage" hidden>
+
+    </article>
+
 </body>
 </html>
