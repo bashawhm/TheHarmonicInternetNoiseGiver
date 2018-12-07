@@ -159,6 +159,7 @@ socket.addEventListener('message', function (event) {
             break;
         case "v=0":
             console.log("Needs to make WebRTC connection here.")
+            console.log(message)
             connectWebRTC(message)
             break;
         default:
