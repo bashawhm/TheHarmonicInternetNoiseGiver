@@ -1,16 +1,25 @@
+// Get pages
+var homepage = document.querySelector("#homepage")
+var lobbynamepage = document.querySelector("#lobbynamepage")
+var usernamepage = document.querySelector("#usernamepage")
+var lobbypage = document.querySelector("#lobbypage")
+// Get inputs
+var searchLobbyInput = document.querySelector("#searchLobbiesInput")
+var lobbyNameInput = document.querySelector("#lobbyNameInput")
+var userNameInput = document.querySelector("#userNameInput")
+// Get buttons
 var setupLobbyBtn = document.querySelector("#createLobbyBtn")
-console.log(setupLobbyBtn)
+var createLobbyNameBtn = document.querySelector("#createLobbyNameBtn")
+var createUserNameBtn = document.querySelector("#createUsernameBtn")
+
 setupLobbyBtn.addEventListener("click", function(){
     console.log("Hide homepage and reveal lobby name page.")
     homepage.setAttribute("hidden", true)
     lobbynamepage.removeAttribute("hidden")
 })
 
-var createLobbyNameBtn = document.querySelector("#createLobbyNameBtn")
-console.log(createLobbyNameBtn)
 createLobbyNameBtn.addEventListener("click", function(){
     console.log("Hide lobbynamepage and reveal user name page.")
-    var lobbyNameInput = document.querySelector("#lobbyNameInput")
     var lName = ""
     lName = lobbyNameInput.value
     console.log("User entered lobby name: " + lName)
@@ -18,11 +27,8 @@ createLobbyNameBtn.addEventListener("click", function(){
     usernamepage.removeAttribute("hidden")
 })
 
-var createUserNameBtn = document.querySelector("#createUsernameBtn")
-console.log(createUserNameBtn)
 createUserNameBtn.addEventListener("click", function(){
     console.log("Hide usernamepage and reveal lobby page.")
-    var userNameInput = document.querySelector("#userNameInput")
     var uName = ""
     uName = userNameInput.value
     console.log("User entered lobby name: " + uName)
@@ -30,14 +36,6 @@ createUserNameBtn.addEventListener("click", function(){
     usernamepage.setAttribute("hidden", true)
     lobbypage.removeAttribute("hidden")
 })
-
-var homepage = document.querySelector("#homepage")
-var lobbynamepage = document.querySelector("#lobbynamepage")
-var usernamepage = document.querySelector("#usernamepage")
-var lobbypage = document.querySelector("#lobbypage")
-
-
-var searchLobbyInput = document.querySelector("#searchLobbiesInput")
 
 // Create WebSocket connection.
 const socket = new WebSocket('ws://localhost:80/socket')
