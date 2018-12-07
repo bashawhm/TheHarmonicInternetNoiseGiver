@@ -8,9 +8,11 @@ var searchLobbyInput = document.querySelector("#searchLobbiesInput")
 var lobbyNameInput = document.querySelector("#lobbyNameInput")
 var userNameInput = document.querySelector("#userNameInput")
 // Get buttons
-var setupLobbyBtn = document.querySelector("#createLobbyBtn")
+var createLobbyBtn = document.querySelector("#createLobbyBtn")
 var createLobbyNameBtn = document.querySelector("#createLobbyNameBtn")
-var createUserNameBtn = document.querySelector("#createUsernameBtn")
+var createUserNameBtn = document.querySelector("#createUserNameBtn")
+// Get fields
+var lobbyNameField = document.querySelector("#lobbyNameField")
 // Data structures
 var lobbies = []
 var lobbyName = ""
@@ -22,29 +24,42 @@ var artists = []
 var tags = []
 var clients = []
 
-setupLobbyBtn.addEventListener("click", function(){
-    console.log("Hide homepage and reveal lobby name page.")
+function createLobbyName() {
+    console.log("Hide homepage and reveal page to create lobby name.")
     homepage.setAttribute("hidden", true)
     lobbynamepage.removeAttribute("hidden")
+}
+
+function createUserName() {
+    console.log("Hide lobbynamepage and reveal page to create user name.")
+    lobbyName = lobbyNameInput.value
+    lobbynamepage.setAttribute("hidden", true)
+    usernamepage.removeAttribute("hidden")
+}
+
+function createLobby() {
+    console.log("Hide usernamepage and reveal lobby page.")
+    userName = userNameInput.value
+    // send CREATE <lobby name> <username> to server and get lobby back then render lobby page
+    var message = {
+        command: "CREATE " + lobbyName + userName 
+    }
+    socket.send(JSON.stringify(message))
+    console.log("Sent CREATE <" + lobbyName + "> <" + userName + "> command to server.")
+    usernamepage.setAttribute("hidden", true)
+    lobbypage.removeAttribute("hidden")
+}
+
+createLobbyBtn.addEventListener("click", function(){
+    createLobbyName()
 })
 
 createLobbyNameBtn.addEventListener("click", function(){
-    console.log("Hide lobbynamepage and reveal user name page.")
-    var lName = ""
-    lName = lobbyNameInput.value
-    console.log("User entered lobby name: " + lName)
-    lobbynamepage.setAttribute("hidden", true)
-    usernamepage.removeAttribute("hidden")
+    createUserName()
 })
 
 createUserNameBtn.addEventListener("click", function(){
-    console.log("Hide usernamepage and reveal lobby page.")
-    var uName = ""
-    uName = userNameInput.value
-    console.log("User entered lobby name: " + uName)
-    // send data to server and create a lobby
-    usernamepage.setAttribute("hidden", true)
-    lobbypage.removeAttribute("hidden")
+    createLobby()
 })
 
 // Create WebSocket connection.
