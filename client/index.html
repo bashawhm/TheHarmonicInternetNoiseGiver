@@ -9,25 +9,32 @@
     <script src="main.js" defer></script>
 </head>
 <body>
-    <section id="homepage">
+    <article id="homepage">
         <h1>The Harmonic Internet Noise Giver</h1>
         <button id="setup-lobby-btn">Create</button>
-        <input type="text" placeholder="Search..."> 
-    </section>
-    <section id="lobbyname" hidden>
+        <form autocomplete="off">
+            <div class="autocomplete" style="width:300px;">
+              <input id="search-lobby-input" type="text" name="myCountry" placeholder="Search lobbies...">
+            </div>
+        </form>
+    </article>
+    <article id="lobbyname" hidden>
         <h1>Setup Lobby</h1>
         <label for="lobby_name">Name</label>
         <input type="text" id="lobby_name">
         <button id="create-lobby-name-btn">Submit</button>
-    </section>
-    <section id="username" hidden>
+    </article>
+    <article id="username" hidden>
         <h1>Create Username</h1>
         <label for="user_name">Name</label>
         <input type="text" id="user_name">
         <button id="create-username-btn">Submit</button>
-    </section>
-    <section id="lobby" hidden>
+    </article>
+    <article id="connect-to-lobby-page" hidden>
+        <h1>Connecting to <span id="lobbynametext"></span></h1>
+    </article>
+    <article id="lobby" hidden>
         <h1>Lobby Page</h1>
-    </section>
+    </article>
 </body>
 </html>
