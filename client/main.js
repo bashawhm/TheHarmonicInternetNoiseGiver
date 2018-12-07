@@ -1,4 +1,4 @@
-var setupLobbyBtn = document.querySelector("#setup-lobby-btn")
+var setupLobbyBtn = document.querySelector("#createLobbyBtn")
 console.log(setupLobbyBtn)
 setupLobbyBtn.addEventListener("click", function(){
     console.log("Hide homepage and reveal lobby name page.")
@@ -6,11 +6,11 @@ setupLobbyBtn.addEventListener("click", function(){
     lobbynamepage.removeAttribute("hidden")
 })
 
-var createLobbyNameBtn = document.querySelector("#create-lobby-name-btn")
+var createLobbyNameBtn = document.querySelector("#createLobbyNameBtn")
 console.log(createLobbyNameBtn)
 createLobbyNameBtn.addEventListener("click", function(){
     console.log("Hide lobbynamepage and reveal user name page.")
-    var lobbyNameInput = document.querySelector("#lobby_name")
+    var lobbyNameInput = document.querySelector("#lobbyNameInput")
     var lName = ""
     lName = lobbyNameInput.value
     console.log("User entered lobby name: " + lName)
@@ -18,11 +18,11 @@ createLobbyNameBtn.addEventListener("click", function(){
     usernamepage.removeAttribute("hidden")
 })
 
-var createUserNameBtn = document.querySelector("#create-username-btn")
+var createUserNameBtn = document.querySelector("#createUsernameBtn")
 console.log(createUserNameBtn)
 createUserNameBtn.addEventListener("click", function(){
     console.log("Hide usernamepage and reveal lobby page.")
-    var userNameInput = document.querySelector("#user_name")
+    var userNameInput = document.querySelector("#userNameInput")
     var uName = ""
     uName = userNameInput.value
     console.log("User entered lobby name: " + uName)
@@ -32,11 +32,12 @@ createUserNameBtn.addEventListener("click", function(){
 })
 
 var homepage = document.querySelector("#homepage")
-var lobbynamepage = document.querySelector("#lobbyname")
-var usernamepage = document.querySelector("#username")
-var lobbypage = document.querySelector("#lobby")
-var searchLobbyInput = document.querySelector("#search-lobby-input")
-var connectingtolobbypage = document.querySelector("#connect-to-lobby-page")
+var lobbynamepage = document.querySelector("#lobbynamepage")
+var usernamepage = document.querySelector("#usernamepage")
+var lobbypage = document.querySelector("#lobbypage")
+
+
+var searchLobbyInput = document.querySelector("#searchLobbiesInput")
 
 // Create WebSocket connection.
 const socket = new WebSocket('ws://localhost:80/socket')
@@ -160,7 +161,7 @@ function autocomplete(inp, arr) {
             /*and simulate a click on the "active" item:*/
             if (x) x[currentFocus].click();
             // Get text from field and submit
-            joinLobby()
+            // joinLobby()
           }
         }
     });
