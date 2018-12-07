@@ -108,9 +108,9 @@ socket.addEventListener('open', function (event) {
 
 // Listen for messages
 socket.addEventListener('message', function (event) {
-    console.log('Message from server ', event.data);
+    // console.log('Message from server ', event.data);
     var message = JSON.parse(event.data)
-    console.log("Command from server: " + message.command)
+    // console.log("Command from server: " + message.command)
     var commands = (message.command.split(/(\s+)/)).filter(function(e) {
         return String(e).trim();
     })

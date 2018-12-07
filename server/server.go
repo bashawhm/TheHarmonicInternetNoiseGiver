@@ -512,105 +512,106 @@ func THINGServer(cconn *websocket.Conn) {
 			},
 		},
 	}
-
-	debugPrintln(Info, "Accepting control connection...")
-	var input THING
-	err := websocket.JSON.Receive(cconn, &input)
-	if err != nil {
-		debugPrintln(Dump, err)
-		return
-	}
-	// fmt.Println(input)
-	nin := bufio.NewScanner(strings.NewReader(input.Command))
-	nin.Split(bufio.ScanWords)
-	var packet THING
-	for nin.Scan() {
-		switch nin.Text() {
-		case "LOBBY":
-			packet.Command = "" 
-			for i := 0; i < len(lobbies); i++ {
-				packet.Command = packet.Command + lobbies[i].name + "\n"
-			}
-			packet.Command = "SERVERLIST\n" + packet.Command
-			fmt.Println("Sending message:\n" + packet.Command)
-			websocket.JSON.Send(cconn, packet)
-		case "JOIN":
-			res := nin.Scan()
-			if !res {
-				debugPrintln(Dump, nin.Err())
-				continue
-			}
-			lobbyName := nin.Text()
-			res = nin.Scan()
-			if !res {
-				debugPrintln(Dump, nin.Err())
-				continue
-			}
-			username := nin.Text()
-			//Check if username is taken
-			for i := 0; i < len(lobbies); i++ {
-				clients := lobbies[i].getClients()
-				for j := 0; j < len(clients); j++ {
-					if clients[j].username == username {
-						packet.Command = username + " TAKEN\n"
+	for {
+		debugPrintln(Info, "Accepting control connection...")
+		var input THING
+		err := websocket.JSON.Receive(cconn, &input)
+		if err != nil {
+			debugPrintln(Dump, err)
+			return
+		}
+		// fmt.Println(input)
+		nin := bufio.NewScanner(strings.NewReader(input.Command))
+		nin.Split(bufio.ScanWords)
+		var packet THING
+		for nin.Scan() {
+			switch nin.Text() {
+			case "LOBBY":
+				packet.Command = ""
+				for i := 0; i < len(lobbies); i++ {
+					packet.Command = packet.Command + lobbies[i].name + "\n"
+				}
+				packet.Command = "SERVERLIST\n" + packet.Command
+				fmt.Println("Sending message:\n" + packet.Command)
+				websocket.JSON.Send(cconn, packet)
+			case "JOIN":
+				res := nin.Scan()
+				if !res {
+					debugPrintln(Dump, nin.Err())
+					continue
+				}
+				lobbyName := nin.Text()
+				res = nin.Scan()
+				if !res {
+					debugPrintln(Dump, nin.Err())
+					continue
+				}
+				username := nin.Text()
+				//Check if username is taken
+				for i := 0; i < len(lobbies); i++ {
+					clients := lobbies[i].getClients()
+					for j := 0; j < len(clients); j++ {
+						if clients[j].username == username {
+							packet.Command = username + " TAKEN\n"
+							websocket.JSON.Send(cconn, packet)
+							continue
+						}
+					}
+				}
+				//Check if lobby exists and add user to it
+				for i := 0; i < len(lobbies); i++ {
+					if lobbies[i].name == lobbyName {
+						packet.Command = "OKAY\n"
+						websocket.JSON.Send(cconn, packet)
+						select {
+						case lobbies[i].newUsers <- createClient(config, username, cconn, false):
+						default:
+							fmt.Println("Channel Full, rejecting user")
+						}
+						packet.Command = "OKAY\n"
+						websocket.JSON.Send(cconn, packet)
+						lobbyMutex.Unlock()
+						return
+					}
+				}
+			case "CREATE":
+				//If the lobby doesn't exist, create it and spawn handler
+				res := nin.Scan()
+				if !res {
+					debugPrintln(Dump, nin.Err())
+					continue
+				}
+				lobbyName := nin.Text()
+				res = nin.Scan()
+				if !res {
+					debugPrintln(Dump, nin.Err())
+					continue
+				}
+				username := nin.Text()
+				for i := 0; i < len(lobbies); i++ {
+					if lobbies[i].name == lobbyName {
+						packet.Command = lobbyName + " TAKEN\n"
 						websocket.JSON.Send(cconn, packet)
 						continue
 					}
 				}
+				packet.Command = "OKAY\n"
+				websocket.JSON.Send(cconn, packet)
+				newChan := make(chan Client, 25)
+				acceptChan := make(chan Client, 25)
+				newLobby := Lobby{name: lobbyName, admin: createClient(config, username, cconn, true), newUsers: newChan, userAccept: acceptChan}
+				lobbies = append(lobbies, newLobby)
+				packet.Command = "OKAY\n"
+				websocket.JSON.Send(cconn, packet)
+				lobbies[len(lobbies)-1].partialMut = new(sync.Mutex)
+				lobbies[len(lobbies)-1].admin.channel.OnMessage(lobbies[len(lobbies)-1].fileRecv)
+				go lobbies[len(lobbies)-1].lobbyHandler()
+				lobbyMutex.Unlock()
+				return
+			default:
 			}
-			//Check if lobby exists and add user to it
-			for i := 0; i < len(lobbies); i++ {
-				if lobbies[i].name == lobbyName {
-					packet.Command = "OKAY\n"
-					websocket.JSON.Send(cconn, packet)
-					select {
-					case lobbies[i].newUsers <- createClient(config, username, cconn, false):
-					default:
-						fmt.Println("Channel Full, rejecting user")
-					}
-					packet.Command = "OKAY\n"
-					websocket.JSON.Send(cconn, packet)
-					lobbyMutex.Unlock()
-					return
-				}
-			}
-		case "CREATE":
-			//If the lobby doesn't exist, create it and spawn handler
-			res := nin.Scan()
-			if !res {
-				debugPrintln(Dump, nin.Err())
-				continue
-			}
-			lobbyName := nin.Text()
-			res = nin.Scan()
-			if !res {
-				debugPrintln(Dump, nin.Err())
-				continue
-			}
-			username := nin.Text()
-			for i := 0; i < len(lobbies); i++ {
-				if lobbies[i].name == lobbyName {
-					packet.Command = lobbyName + " TAKEN\n"
-					websocket.JSON.Send(cconn, packet)
-					continue
-				}
-			}
-			packet.Command = "OKAY\n"
-			websocket.JSON.Send(cconn, packet)
-			newChan := make(chan Client, 25)
-			acceptChan := make(chan Client, 25)
-			newLobby := Lobby{name: lobbyName, admin: createClient(config, username, cconn, true), newUsers: newChan, userAccept: acceptChan}
-			lobbies = append(lobbies, newLobby)
-			packet.Command = "OKAY\n"
-			websocket.JSON.Send(cconn, packet)
-			lobbies[len(lobbies)-1].partialMut = new(sync.Mutex)
-			lobbies[len(lobbies)-1].admin.channel.OnMessage(lobbies[len(lobbies)-1].fileRecv)
-			go lobbies[len(lobbies)-1].lobbyHandler()
-			lobbyMutex.Unlock()
-		default:
 		}
 	}
-
 }
 
 func main() {
