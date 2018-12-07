@@ -504,7 +504,7 @@ func (lobby *Lobby) lobbyHandler() {
 //Web socket handler called by the HTTP server
 func THINGServer(cconn *websocket.Conn) {
 	fmt.Fprintf(os.Stderr, "THING client connecting...\n")
-	lobbyMutex.Lock()
+	// lobbyMutex.Lock()
 	config := webrtc.RTCConfiguration{
 		IceServers: []webrtc.RTCIceServer{
 			{
@@ -570,7 +570,7 @@ func THINGServer(cconn *websocket.Conn) {
 						}
 						packet.Command = "OKAY\n"
 						websocket.JSON.Send(cconn, packet)
-						lobbyMutex.Unlock()
+						// lobbyMutex.Unlock()
 						return
 					}
 				}
@@ -579,20 +579,20 @@ func THINGServer(cconn *websocket.Conn) {
 				res := nin.Scan()
 				if !res {
 					debugPrintln(Dump, nin.Err())
-					continue
+					return
 				}
 				lobbyName := nin.Text()
 				res = nin.Scan()
 				if !res {
 					debugPrintln(Dump, nin.Err())
-					continue
+					return
 				}
 				username := nin.Text()
 				for i := 0; i < len(lobbies); i++ {
 					if lobbies[i].name == lobbyName {
 						packet.Command = lobbyName + " TAKEN\n"
 						websocket.JSON.Send(cconn, packet)
-						continue
+						return
 					}
 				}
 				packet.Command = "OKAY\n"
@@ -601,12 +601,13 @@ func THINGServer(cconn *websocket.Conn) {
 				acceptChan := make(chan Client, 25)
 				newLobby := Lobby{name: lobbyName, admin: createClient(config, username, cconn, true), newUsers: newChan, userAccept: acceptChan}
 				lobbies = append(lobbies, newLobby)
+				fmt.Println(lobbies)
 				packet.Command = "OKAY\n"
 				websocket.JSON.Send(cconn, packet)
 				lobbies[len(lobbies)-1].partialMut = new(sync.Mutex)
 				lobbies[len(lobbies)-1].admin.channel.OnMessage(lobbies[len(lobbies)-1].fileRecv)
 				go lobbies[len(lobbies)-1].lobbyHandler()
-				lobbyMutex.Unlock()
+				// lobbyMutex.Unlock()
 				return
 			default:
 			}

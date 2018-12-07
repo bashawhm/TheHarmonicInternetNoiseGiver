@@ -27,6 +27,20 @@ var artists = []
 var tags = []
 var clients = []
 
+function connectWebRTC(message) {
+    // console.log("Connected! Makes webrtc connection with server. Data:\n")
+    // // console.log(message)
+    // // var config = {
+    // //     iceServers: [{urls: 'stun:stun.l.google.com:19302'}]
+    // // }
+    // const pc = new RTCPeerConnection()
+
+    // pc.createOffer()
+    //     .then(offer => pc.setLocalDescription(new RTCSessionDescription(offer)))
+    //     // .then(an => )
+
+}
+
 function setLobbyNameField() {
     lobbyNameField.innerHTML = lobbyName
 }
@@ -142,6 +156,10 @@ socket.addEventListener('message', function (event) {
             break;
         case "OKAY":
             console.log("Got OK from server.")
+            break;
+        case "v=0":
+            console.log("Needs to make WebRTC connection here.")
+            connectWebRTC(message)
             break;
         default:
             console.error("Unknown command: " + command)
