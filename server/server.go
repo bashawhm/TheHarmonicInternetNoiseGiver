@@ -623,11 +623,16 @@ func main() {
 	//Initialization stuff
 	webrtc.RegisterDefaultCodecs()
 
-	lobbies = append(lobbies, Lobby{name: "JeffBezons1"})
-	lobbies = append(lobbies, Lobby{name: "JeffBezons2"})
-	lobbies = append(lobbies, Lobby{name: "JeffBezons3"})
-	lobbies = append(lobbies, Lobby{name: "JeffBezons4"})
-	lobbies = append(lobbies, Lobby{name: "JeffBezons5"})
+	lobbies = append(lobbies, Lobby{name: "SampleLobby"})
+	lobbies = append(lobbies, Lobby{name: "SamsLobby"})
+	lobbies = append(lobbies, Lobby{name: "SomeParty"})
+	lobbies = append(lobbies, Lobby{name: "SomeEvent"})
+	lobbies = append(lobbies, Lobby{name: "AnythingElse"})
+	lobbies = append(lobbies, Lobby{name: "SampleLobby2"})
+	lobbies = append(lobbies, Lobby{name: "SamsLobby2"})
+	lobbies = append(lobbies, Lobby{name: "SomeParty2"})
+	lobbies = append(lobbies, Lobby{name: "SomeEvent2"})
+	lobbies = append(lobbies, Lobby{name: "AnythingElse2"})
 	//Start server
 	http.ListenAndServe(":80", nil)
 }
