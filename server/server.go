@@ -466,6 +466,7 @@ func (lobby *Lobby) lobbyHandler() {
 						song.tag2 = songTag2
 						song.audio = lobby.partialSong
 						lobby.addSongToQueue(song)
+						lobby.pushSong(song)
 					default:
 					}
 				} else if clients[i].moderator { //If sent from a moderator
