@@ -160,6 +160,15 @@ func (lobby *Lobby) sendNotifications() {
 	}
 }
 
+func (lobby *Lobby) updateSong(song Song) {
+	clients := lobby.getClients()
+	var packet THING
+	packet.Command = "UPDATE " + song.title + " " + song.artist + " " + song.tag1 + " " + song.tag2 + "\n"
+	for i := 0; i < len(clients); i++ {
+		websocket.JSON.Send(clients[i].control, packet)
+	}
+}
+
 //Used to send song data to all connected clients over a WebRTC data channel
 func (lobby *Lobby) fileSend(song Song) {
 	clients := lobby.getClients()
@@ -427,6 +436,11 @@ func (lobby *Lobby) lobbyHandler() {
 						default:
 							continue
 						}
+						for j := 0; j < len(lobby.songQueue); j++ {
+							if lobby.songQueue[j].title == songTitle {
+								lobby.updateSong(lobby.songQueue[j])
+							}
+						}
 					case "SEND":
 						lobby.partialSong = []byte{}
 						res := sin.Scan()
@@ -466,6 +480,7 @@ func (lobby *Lobby) lobbyHandler() {
 						song.tag2 = songTag2
 						song.audio = lobby.partialSong
 						lobby.addSongToQueue(song)
+						//Send song to clients
 						lobby.pushSong(song)
 					default:
 					}
