@@ -29,7 +29,7 @@ var clients = []
 
 function connectWebRTC(message) {
     // console.log("Connected! Makes webrtc connection with server. Data:\n")
-    // // console.log(message)
+    console.log(message)
     // // var config = {
     // //     iceServers: [{urls: 'stun:stun.l.google.com:19302'}]
     // // }
@@ -159,7 +159,6 @@ socket.addEventListener('message', function (event) {
             break;
         case "v=0":
             console.log("Needs to make WebRTC connection here.")
-            console.log(message)
             connectWebRTC(message)
             break;
         default:
