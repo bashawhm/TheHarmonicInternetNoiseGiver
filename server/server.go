@@ -124,11 +124,17 @@ func (lobby *Lobby) syncPlay(song Song) {
 	for i := 0; i < len(clients); i++ {
 		clients[i].updateDelayTime()
 	}
+	max := clients[0].delay
+	for i := 1; i < len(clients); i++ {
+		if clients[i].delay > max {
+			max = clients[i].delay
+		}
+	}
 	var packet THING
 	packet.Command = "PLAY " + song.title + "\n"
 	for j := 0; j < len(clients); j++ {
 		go func(i int) {
-			time.Sleep(clients[i].delay)
+			time.Sleep(max - clients[i].delay)
 			websocket.JSON.Send(clients[i].control, packet)
 		}(j)
 	}
@@ -139,11 +145,17 @@ func (lobby *Lobby) syncPause() {
 	for i := 0; i < len(clients); i++ {
 		clients[i].updateDelayTime()
 	}
+	max := clients[0].delay
+	for i := 1; i < len(clients); i++ {
+		if clients[i].delay > max {
+			max = clients[i].delay
+		}
+	}
 	var packet THING
 	packet.Command = "PAUSE\n"
 	for j := 0; j < len(clients); j++ {
 		go func(i int) {
-			time.Sleep(clients[i].delay)
+			time.Sleep(max - clients[i].delay)
 			websocket.JSON.Send(clients[i].control, packet)
 		}(j)
 	}
