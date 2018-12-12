@@ -230,32 +230,37 @@ func (lobby *Lobby) fileRecv(p datachannel.Payload) {
 
 //Creates a Client and handles WebRTC magic
 func createClient(config webrtc.RTCConfiguration, userName string, conn *websocket.Conn, mod bool) Client {
+	//Debug printing...
 	if mod {
 		debugPrintln(Spew, "Creating client "+userName+" with mod status true")
 	} else {
 		debugPrintln(Spew, "Creating client "+userName+" with mod status false")
 	}
-	//Handle webRTC stuff
+
+	//Creates the webRTC peer connection with a config to point it at google's public STUN server
 	pconn, err := webrtc.New(config)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create new connection\n")
 		panic(err)
 	}
-
-	//Create the data channel
+	//Create the data channel from the peer connection
+	//The data channel named "audio" is where the file data will actually be sent
+	//This is distinct from the peer connection
 	dataChannel, err := pconn.CreateDataChannel("audio", nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create data channel\n")
 		panic(err)
 	}
 
-	//Set some handlers...
+	//When the data channel opens up print to debug command line
 	dataChannel.OnOpen(func() { debugPrintln(Dump, "Data Channel opened to "+userName) })
+	//When the peer connection is checking or fully connects it'll call this handler and print to the debug log
+	//Generally unimportant, could live without
 	pconn.OnICEConnectionStateChange(func(connState ice.ConnectionState) {
 		debugPrintln(Dump, userName+" "+connState.String())
 	})
 
-	//Exchange peering offers
+	//Create WebRTC offer to link up with the client
 	debugPrintln(Spew, "Exchanging offers")
 	offer, err := pconn.CreateOffer(nil)
 	if err != nil {
@@ -264,14 +269,18 @@ func createClient(config webrtc.RTCConfiguration, userName string, conn *websock
 	}
 	var packet THING
 	packet.Command = offer.Sdp
+	//Send offer to client
 	websocket.JSON.Send(conn, packet)
+	//Get the clients offer back to link the server with the client
 	websocket.JSON.Receive(conn, &packet)
 	sd := packet.Command
 
+	//Create answer out of the clients offer to fully create the connection
 	answer := webrtc.RTCSessionDescription{
 		Type: webrtc.RTCSdpTypeAnswer,
 		Sdp:  sd,
 	}
+	//Actually fully connects the client and the server
 	err = pconn.SetRemoteDescription(answer)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to set remote descriptor\n")
