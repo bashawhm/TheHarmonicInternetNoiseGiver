@@ -616,7 +616,7 @@ func THINGServer(cconn *websocket.Conn) {
 						packet.Command = "OKAY\n"
 						websocket.JSON.Send(cconn, packet)
 						// lobbyMutex.Unlock()
-						return
+						select {}
 					}
 				}
 			case "CREATE":
@@ -653,7 +653,7 @@ func THINGServer(cconn *websocket.Conn) {
 				lobbies[len(lobbies)-1].admin.channel.OnMessage(lobbies[len(lobbies)-1].fileRecv)
 				go lobbies[len(lobbies)-1].lobbyHandler()
 				// lobbyMutex.Unlock()
-				return
+				select {}
 			default:
 			}
 		}
