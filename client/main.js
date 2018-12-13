@@ -16,6 +16,7 @@ var createUserNameCreateBtn = document.querySelector("#createUserNameCreateBtn")
 var createUserNameJoinBtn = document.querySelector("#createUserNameJoinBtn")
 // Get fields
 var lobbyNameField = document.querySelector("#lobbyNameField")
+var lobbyNameFieldWait = document.querySelector("#lobbyNameFieldWait")
 // Data structures
 var lobbies = []
 var lobbyName = ""
@@ -32,34 +33,30 @@ function connectWebRTC(message) {
     //     audio: true,
     // }
     // const localAudio = document.querySelector('#audio')
-    
-    
-    
-    
-    
     // console.log("Connected! Makes webrtc connection with server. Data:\n")
     console.log(message)
     // // var config = {
     // //     iceServers: [{urls: 'stun:stun.l.google.com:19302'}]
     // // }
     // const pc = new RTCPeerConnection()
-
     // pc.createOffer()
     //     .then(offer => pc.setLocalDescription(new RTCSessionDescription(offer)))
     //     // .then(an => )
-
 }
 
+// Sets the lobby name field to the lobby name the user entered
 function setLobbyNameField() {
     lobbyNameField.innerHTML = lobbyName
 }
 
+// Hides the homepage and unhides the page for entering the lobby name
 function createLobbyName() {
     console.log("Hide homepage and reveal page to create lobby name.")
     homepage.setAttribute("hidden", true)
     lobbynamepage.removeAttribute("hidden")
 }
 
+// Hides the lobby name page and unhides the page for entering the user name
 function createUserName() {
     console.log("Hide lobbynamepage and reveal page to create user name.")
     lobbyName = lobbyNameInput.value
@@ -67,6 +64,8 @@ function createUserName() {
     usernamepagecreate.removeAttribute("hidden")
 }
 
+// Hides the user name page and unhides the lobby page
+// Sends the server a command to create a new lobby
 function createLobby() {
     console.log("Hide usernamepagecreate and reveal lobby page.")
     userName = userNameInput.value
@@ -77,9 +76,12 @@ function createLobby() {
     socket.send(JSON.stringify(message))
     console.log("Sent CREATE <" + lobbyName + "> <" + userName + "> command to server.")
     usernamepagecreate.setAttribute("hidden", true)
+    setLobbyNameField()
     lobbypage.removeAttribute("hidden")
 }
 
+// Hide user name page and unhide the waiting to join lobby page
+// Sends the server a command to join a lobby
 function joinLobby() {
     console.log("Hide usernamepagejoin and reveal waiting page.")
     userName = userNameInput.value
@@ -94,8 +96,10 @@ function joinLobby() {
     waitingpage.removeAttribute("hidden")
 }
 
+// Show waiting page
 function enterLobby() {
     console.log("Trying to join " + lobbyName)
+    lobbyNameFieldWait.innerHTML = lobbyName
     homepage.setAttribute("hidden", true)
     usernamepagejoin.removeAttribute("hidden")
 }
