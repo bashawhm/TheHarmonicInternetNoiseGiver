@@ -40,18 +40,59 @@ input {
   color: #ffffff;
 }
 
-/* .memberListBtn {
+.memberListBtn {
   background:url('Members.svg');
-  width: 124px;
-  height: 124px;
+  width: 48px;
+  height: 48px;
   background-position: center;
   display: inline-block;
   border: none;
   background-size: cover;
-} */
+}
 
-img { 
+.uploadSongBtn {
+  background:url('Music_Upload.svg');
+  width: 48px;
+  height: 48px;
+  background-position: center;
+  display: inline-block;
+  border: none;
+  background-size: cover;
+}
+
+.inviteBtn {
+  background:url('Send_Invite.svg');
+  width: 48px;
+  height: 48px;
+  background-position: center;
+  display: inline-block;
+  border: none;
+  background-size: cover;
+}
+
+.inviteListBtn {
+  background:url('Req_Empty.svg');
+  width: 48px;
+  height: 48px;
+  background-position: center;
+  display: inline-block;
+  border: none;
+  background-size: cover;
+}
+
+.settingsBtn {
+  background:url('Settings.svg');
+  width: 48px;
+  height: 48px;
+  background-position: center;
+  display: inline-block;
+  border: none;
+  background-size: cover;
+}
+
+/* debug images */
+/* img { 
   border:1px solid #021a40;
   width: 124px;
   height: 124px;
-}
+} */
