@@ -161,6 +161,27 @@ input {
   margin-top: 4%;
 }
 
+.grid-container {
+  display: grid;
+  grid-template-columns: auto auto auto auto;
+}
+
+section {
+  font: 10px Arial;
+  margin-left: 3px;
+  text-align: left;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* .grid-item {
+
+} */
+
 /* #homepage {
   color: blue;
 } */
