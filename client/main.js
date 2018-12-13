@@ -5,6 +5,9 @@ var usernamepagecreate = document.querySelector("#usernamepagecreate")
 var usernamepagejoin = document.querySelector("#usernamepagejoin")
 var lobbypage = document.querySelector("#lobbypage")
 var waitingpage = document.querySelector("#waitingpage")
+var membersModal = document.querySelector("#memberspage")
+var joinRequestsModal = document.querySelector("#joinrequestspage")
+var settingsModal = document.querySelector("#settingspage")
 // Get inputs
 var searchLobbyInput = document.querySelector("#searchLobbiesInput")
 var lobbyNameInput = document.querySelector("#lobbyNameInput")
@@ -14,6 +17,14 @@ var createLobbyBtn = document.querySelector("#createLobbyBtn")
 var createLobbyNameBtn = document.querySelector("#createLobbyNameBtn")
 var createUserNameCreateBtn = document.querySelector("#createUserNameCreateBtn")
 var createUserNameJoinBtn = document.querySelector("#createUserNameJoinBtn")
+var memberListBtn = document.querySelector("#memberListBtn")
+var uploadSongBtn = document.querySelector("#uploadSongBtn")
+var inviteBtn = document.querySelector("#inviteBtn")
+var inviteListBtn = document.querySelector("#inviteListBtn")
+var settingsBtn = document.querySelector("#settingsBtn")
+var playBtn = document.querySelector("#playBtn")
+var wildCardBtn = document.querySelector("#wildCardBtn")
+var stopBtn = document.querySelector("#stopBtn")
 // Get fields
 var lobbyNameField = document.querySelector("#lobbyNameField")
 var lobbyNameFieldWait = document.querySelector("#lobbyNameFieldWait")
@@ -223,6 +234,36 @@ socket.addEventListener('message', function (event) {
             break;
     }
 
+})
+
+memberListBtn.addEventListener('click', function() {
+    membersModal.setAttribute("open",true)
+})
+
+inviteListBtn.addEventListener('click', function() {
+    joinRequestsModal.setAttribute("open",true)
+})
+
+settingsBtn.addEventListener('click', function() {
+    settingsModal.setAttribute("open",true)
+})
+
+membersModal.addEventListener('click', event => {
+    if (event.target === membersModal) {
+        membersModal.removeAttribute("open")
+    }
+})
+
+joinRequestsModal.addEventListener('click', event => {
+    if (event.target === joinRequestsModal) {
+        joinRequestsModal.removeAttribute("open")
+    }
+})
+
+settingsModal.addEventListener('click', event => {
+    if (event.target === settingsModal) {
+        settingsModal.removeAttribute("open")
+    }
 })
 
 /* renders an autocomplete form given an element to append form to and the array
