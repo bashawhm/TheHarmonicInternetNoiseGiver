@@ -13,6 +13,7 @@ var searchLobbyInput = document.querySelector("#searchLobbiesInput")
 var lobbyNameInput = document.querySelector("#lobbyNameInput")
 var userNameInput = document.querySelector("#userNameInput")
 var userNameInputCreate = document.querySelector("#userNameInputCreate")
+var songUploadId = document.getElementById('songUploadId')
 // Get buttons
 var createLobbyBtn = document.querySelector("#createLobbyBtn")
 var createLobbyNameBtn = document.querySelector("#createLobbyNameBtn")
@@ -29,6 +30,8 @@ var stopBtn = document.querySelector("#stopBtn")
 // Get fields
 var lobbyNameField = document.querySelector("#lobbyNameField")
 var lobbyNameFieldWait = document.querySelector("#lobbyNameFieldWait")
+// Get audio
+var sound = document.querySelector("#audio")
 // Data structures
 var lobbies = []
 var lobbyName = ""
@@ -174,6 +177,23 @@ createUserNameCreateBtn.addEventListener("click", function(){
 
 createUserNameJoinBtn.addEventListener("click", function(){
     joinLobby()
+})
+
+uploadSongBtn.addEventListener("click", function() {
+    songUploadId.click()
+})
+
+songUploadId.onchange = function() {
+    var reader = new FileReader()
+    reader.onload = function(e) {
+        sound.src = this.result
+        // sound.play()
+    }
+    reader.readAsDataURL(this.files[0])
+}
+
+playBtn.addEventListener("click", function() {
+    sound.play()
 })
 
 // Create WebSocket connection.
