@@ -169,7 +169,10 @@ func (lobby *Lobby) sendNotifications() {
 		for j := 0; j < len(clients[i].notifications); i++ {
 			packet.Command += clients[i].notifications[j] + "\n"
 		}
-		websocket.JSON.Send(clients[i].control, packet)
+		err := websocket.JSON.Send(clients[i].control, packet)
+		if err != nil {
+			debugPrintln(Info, err)
+		}
 	}
 }
 
@@ -294,7 +297,6 @@ func createClient(config webrtc.RTCConfiguration, userName string, conn *websock
 //Handles all operations within the lobby
 func (lobby *Lobby) lobbyHandler() {
 	for {
-		lobby.sendNotifications()
 		select {
 		//If a client wants to connect
 		case newUser := <-lobby.newUsers:
@@ -314,6 +316,7 @@ func (lobby *Lobby) lobbyHandler() {
 			lobby.users = append(lobby.users, accept)
 		//Handle all client Commands
 		default:
+			lobby.sendNotifications()
 			clients := lobby.getClients()
 			for i := 0; i < len(clients); i++ {
 				buffer := make([]byte, 8192)
