@@ -374,7 +374,11 @@ func (lobby *Lobby) lobbyHandler() {
 							if lobby.bufferedUsers[j].username == user {
 								lobby.userAccept <- lobby.bufferedUsers[j]
 								//Remove Client from buffer
-								lobby.bufferedUsers = append(lobby.bufferedUsers[:j], lobby.bufferedUsers[j+1:]...)
+								if len(lobby.bufferedUsers) == 1 {
+									lobby.bufferedUsers = []Client{}
+								} else {
+									lobby.bufferedUsers = append(lobby.bufferedUsers[:j], lobby.bufferedUsers[j+1:]...)
+								}
 								packet.Command = "OKAY\n"
 								websocket.JSON.Send(clients[i].control, packet)
 								break
