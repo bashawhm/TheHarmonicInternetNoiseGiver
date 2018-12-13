@@ -28,6 +28,15 @@ var tags = []
 var clients = []
 
 function connectWebRTC(message) {
+    // const mediaStreamConstraints = {
+    //     audio: true,
+    // }
+    // const localAudio = document.querySelector('#audio')
+    
+    
+    
+    
+    
     // console.log("Connected! Makes webrtc connection with server. Data:\n")
     console.log(message)
     // // var config = {
