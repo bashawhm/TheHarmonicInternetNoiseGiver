@@ -12,6 +12,7 @@ var settingsModal = document.querySelector("#settingspage")
 var searchLobbyInput = document.querySelector("#searchLobbiesInput")
 var lobbyNameInput = document.querySelector("#lobbyNameInput")
 var userNameInput = document.querySelector("#userNameInput")
+var userNameInputCreate = document.querySelector("#userNameInputCreate")
 // Get buttons
 var createLobbyBtn = document.querySelector("#createLobbyBtn")
 var createLobbyNameBtn = document.querySelector("#createLobbyNameBtn")
@@ -123,7 +124,7 @@ function createUserName() {
 // Sends the server a command to create a new lobby
 function createLobby() {
     console.log("Hide usernamepagecreate and reveal lobby page.")
-    userName = userNameInput.value
+    userName = userNameInputCreate.value
     // send CREATE <lobby name> <username> to server and get lobby back then render lobby page
     var message = {
         command: "CREATE " + lobbyName + " " + userName 
