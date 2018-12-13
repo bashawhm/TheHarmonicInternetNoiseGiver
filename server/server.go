@@ -165,6 +165,7 @@ func (lobby *Lobby) sendNotifications() {
 	clients := lobby.getClients()
 	var packet THING
 	for i := 0; i < len(clients); i++ {
+		packet.Command = "NOTIFY "
 		for j := 0; j < len(clients[i].notifications); i++ {
 			packet.Command += clients[i].notifications[j] + "\n"
 		}
@@ -338,7 +339,7 @@ func (lobby *Lobby) lobbyHandler() {
 					}
 				}
 				if err != nil {
-					debugPrintln(Spew, err)
+					// debugPrintln(Spew, err)
 					continue
 				}
 				if n == 0 {
