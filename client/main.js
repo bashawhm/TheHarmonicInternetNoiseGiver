@@ -27,14 +27,22 @@ var songnames = []
 var artists = []
 var tags = []
 var clients = []
+var offer = ""
+
+// navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
+window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+window.RTCIceCandidate = window.RTCIceCandidate || window.mozRTCIceCandidate || window.webkitRTCIceCandidate;
+window.RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
 
 function connectWebRTC(message) {
+    console.log("Received offer.\n")
     // const mediaStreamConstraints = {
     //     audio: true,
     // }
     // const localAudio = document.querySelector('#audio')
     // console.log("Connected! Makes webrtc connection with server. Data:\n")
-    console.log(message)
+    // console.log(message.command)
+    offer = message.command
     // // var config = {
     // //     iceServers: [{urls: 'stun:stun.l.google.com:19302'}]
     // // }
@@ -42,6 +50,42 @@ function connectWebRTC(message) {
     // pc.createOffer()
     //     .then(offer => pc.setLocalDescription(new RTCSessionDescription(offer)))
     //     // .then(an => )
+    // var message = {
+    //     command: offer
+    // }
+    // console.log("Sending offer.\n")
+    // socket.send(JSON.stringify(message))
+    // let log = msg => {
+    //     console.log(msg)
+    // }
+    // let pcConfig = {iceServers: [{urls: 'stun:stun.l.google.com:19302'}]}
+    // const pc = new RTCPeerConnection(pcConfig)
+    // let sendChannel = pc.createDataChannel('audio')
+    // sendChannel.onclose = () => console.log('sendChannel has closed')
+    // sendChannel.onopen = () => console.log('sendChannel has opened')
+    // sendChannel.onmessage = e => log(`Message from DataChannel '${sendChannel.label}' payload '${e.data}'`)
+    // pc.oniceconnectionstatechange = e => log(pc.iceConnectionState)
+    // pc.onnegotiationneeded = e => pc.createOffer().then(offer => pc.setLocalDescription(offer)).catch(log)
+    // socket.send(JSON.stringify(message))
+    
+    // The server is the initiator of the connection and created an offer for 
+    // us that we received (message), now we need to send an answer back
+    let pcConfig = {iceServers: [{urls: 'stun:stun.l.google.com:19302'}]}
+    const pc = new RTCPeerConnection(pcConfig)
+    pc.setRemoteDescription(message).then(function () {
+        return navigator.mediaDevices.getUserMedia(null);
+    }).then(function(stream) {
+        document.getElementById("audio").srcObject = stream;
+        return pc.addStream(stream);
+    }).then(function() {
+        return pc.createAnswer();
+    }).then(function(answer) {
+        return pc.setLocalDescription(answer);
+    }).then(function() {
+        // Send the answer to the remote peer using the signaling server
+    }).catch(function (e) { console.log(e) })    
+
+
 }
 
 // Sets the lobby name field to the lobby name the user entered
