@@ -66,35 +66,35 @@ function connectWebRTC(message) {
     // }
     // console.log("Sending offer.\n")
     // socket.send(JSON.stringify(message))
-    // let log = msg => {
-    //     console.log(msg)
-    // }
-    // let pcConfig = {iceServers: [{urls: 'stun:stun.l.google.com:19302'}]}
-    // const pc = new RTCPeerConnection(pcConfig)
-    // let sendChannel = pc.createDataChannel('audio')
-    // sendChannel.onclose = () => console.log('sendChannel has closed')
-    // sendChannel.onopen = () => console.log('sendChannel has opened')
-    // sendChannel.onmessage = e => log(`Message from DataChannel '${sendChannel.label}' payload '${e.data}'`)
-    // pc.oniceconnectionstatechange = e => log(pc.iceConnectionState)
-    // pc.onnegotiationneeded = e => pc.createOffer().then(offer => pc.setLocalDescription(offer)).catch(log)
-    // socket.send(JSON.stringify(message))
+    let log = msg => {
+        console.log(msg)
+    }
+    let pcConfig = {iceServers: [{urls: 'stun:stun.l.google.com:19302'}]}
+    const pc = new RTCPeerConnection(pcConfig)
+    let sendChannel = pc.createDataChannel('audio')
+    sendChannel.onclose = () => console.log('sendChannel has closed')
+    sendChannel.onopen = () => console.log('sendChannel has opened')
+    sendChannel.onmessage = e => log(`Message from DataChannel '${sendChannel.label}' payload '${e.data}'`)
+    pc.oniceconnectionstatechange = e => log(pc.iceConnectionState)
+    pc.onnegotiationneeded = e => pc.createOffer().then(offer => pc.setLocalDescription(offer)).catch(log)
+    socket.send(JSON.stringify(message))
     
     // The server is the initiator of the connection and created an offer for 
     // us that we received (message), now we need to send an answer back
-    let pcConfig = {iceServers: [{urls: 'stun:stun.l.google.com:19302'}]}
-    const pc = new RTCPeerConnection(pcConfig)
-    pc.setRemoteDescription(message).then(function () {
-        return navigator.mediaDevices.getUserMedia(null);
-    }).then(function(stream) {
-        document.getElementById("audio").srcObject = stream;
-        return pc.addStream(stream);
-    }).then(function() {
-        return pc.createAnswer();
-    }).then(function(answer) {
-        return pc.setLocalDescription(answer);
-    }).then(function() {
-        // Send the answer to the remote peer using the signaling server
-    }).catch(function (e) { console.log(e) })    
+    // let pcConfig = {iceServers: [{urls: 'stun:stun.l.google.com:19302'}]}
+    // const pc = new RTCPeerConnection(pcConfig)
+    // pc.setRemoteDescription(message).then(function () {
+    //     return navigator.mediaDevices.getUserMedia(null);
+    // }).then(function(stream) {
+    //     document.getElementById("audio").srcObject = stream;
+    //     return pc.addStream(stream);
+    // }).then(function() {
+    //     return pc.createAnswer();
+    // }).then(function(answer) {
+    //     return pc.setLocalDescription(answer);
+    // }).then(function() {
+    //     // Send the answer to the remote peer using the signaling server
+    // }).catch(function (e) { console.log(e) })    
 
 
 }
