@@ -1,18 +1,37 @@
 * { box-sizing: border-box; }
+
 body {
-  font: 16px Arial;
+  margin: 0; 
+  padding: 0; 
+  font-size: 100%; 
+  line-height: 1.5;
+  font: Arial;
+  text-align: center;
+  background: #D5D5D5;
 }
+
 .autocomplete {
   /*the container must be positioned relative:*/
   position: relative;
   display: inline-block;
 }
-input {
+input, button {
   border: 1px solid transparent;
   background-color: #f1f1f1;
   padding: 10px;
   font-size: 16px;
+  margin: 3px;
+  border-radius: 6px;
 }
+
+button {
+  width: 30%;
+}
+
+input {
+  width: 60%;
+}
+
 .autocomplete-items {
   position: absolute;
   border: 1px solid #d4d4d4;
@@ -27,7 +46,7 @@ input {
 .autocomplete-items div {
   padding: 10px;
   cursor: pointer;
-  background-color: #fff;
+  background-color: #f1f1f1;
   border-bottom: 1px solid #d4d4d4;
 }
 .autocomplete-items div:hover {
@@ -36,7 +55,7 @@ input {
 }
 .autocomplete-active {
   /*when navigating through the items using the arrow keys:*/
-  background-color: DodgerBlue !important;
+  background-color: rgb(148, 148, 148) !important;
   color: #ffffff;
 }
 
@@ -89,6 +108,62 @@ input {
   border: none;
   background-size: cover;
 }
+
+.playBtn {
+  background:url('Play.svg');
+  width: 36px;
+  height: 36px;
+  background-position: center;
+  display: inline-block;
+  border: none;
+  background-size: cover;
+}
+
+.wildCardBtn {
+  background:url('Wild_Card.svg');
+  width: 36px;
+  height: 36px;
+  background-position: center;
+  display: inline-block;
+  border: none;
+  background-size: cover;
+  margin-left: 13px;
+}
+
+.stopBtn {
+  background:url('Stop.svg');
+  width: 48px;
+  height: 48px;
+  background-position: center;
+  display: inline-block;
+  border: none;
+  background-size: cover;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.waitingSvg {
+  width: 48px;
+  height: 48px;
+  animation-duration: 2s;
+  animation-name: spin;
+  animation-iteration-count: infinite; 
+}
+
+#lobbyManagementNav {
+  margin-top: 4%;
+}
+
+/* #homepage {
+  color: blue;
+} */
 
 /* debug images */
 /* img { 

@@ -11,10 +11,11 @@
 <body>
     
     <article id="homepage">
-        <h1>The Harmonic Internet Noise Giver</h1>
+        <h1>T.H.I.N.G.</h1>
         <button id="createLobbyBtn">Create</button>
+        <br> <br>
         <form autocomplete="off">
-            <div class="autocomplete" style="width:300px;">
+            <div class="autocomplete">
               <input id="searchLobbiesInput" type="text" placeholder="Search lobbies...">
             </div>
         </form>
@@ -24,6 +25,7 @@
         <h1>Setup Lobby</h1>
         <label for="lobbyNameInput">Name</label>
         <input type="text" id="lobbyNameInput">
+        <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br>
         <button id="createLobbyNameBtn">Submit</button>
     </article>
     
@@ -31,6 +33,7 @@
         <h1>Create Username</h1>
         <label for="userNameInput">Name</label>
         <input type="text" id="userNameInput">
+        <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br>
         <button id="createUserNameCreateBtn">Submit</button>
     </article>
 
@@ -38,15 +41,19 @@
             <h1>Create Username</h1>
             <label for="userNameInput">Name</label>
             <input type="text" id="userNameInput">
+            <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br>
             <button id="createUserNameJoinBtn">Submit</button>
     </article>
     
     <article id="waitingpage" hidden>
-        <h1>Connecting to <span id="lobbyNameFieldWait"></span></h1>
+        <br> <br> <br> <br> <br> <br>
+        <h1>Waiting to join <span id="lobbyNameFieldWait"></span></h1>
+        <br>
+        <img class="waitingSvg" src="Waiting.svg" alt="Waiting to join lobby...">
     </article>
     
     <article id="lobbypage" hidden>
-        <audio id="audio" controls>
+        <audio id="audio">
             <source type="audio/mpeg">
         </audio> 
         <!-- Top buttons go in a nav bar here -->
@@ -60,9 +67,9 @@
         <!-- Next set of fields in a nav bar here -->
         <nav id="lobbyAudioNav">
             <h1><span id="lobbyNameField"></span></h1>
-            <button id="playBtn">INSERT PLAY ICON HERE</button>
-            <button id="wildCardBtn">INSERT WILDCARD ICON HERE</button>
-            <button id="stopBtn">INSERT STOP ICON HERE</button>
+            <button class="playBtn" id="playBtn"></button>
+            <button class="wildCardBtn" id="wildCardBtn"></button>
+            <button class="stopBtn" id="stopBtn"></button>
         </nav>
         <!-- List of song names here - data to be appeded/rendered here later -->
         <section>
