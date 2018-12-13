@@ -196,6 +196,10 @@ playBtn.addEventListener("click", function() {
     sound.play()
 })
 
+stopBtn.addEventListener("click", function() {
+    sound.pause()
+})
+
 // Create WebSocket connection.
 const socket = new WebSocket('ws://localhost:80/socket')
 
@@ -233,6 +237,7 @@ socket.addEventListener('message', function (event) {
             break;
         case "NOTIFY":
             console.log("Got NOTIFY from server.")
+            console.log(commands.slice(1))
             break;
         case "UPDATE":
             console.log("Got UPDATE from server.")
