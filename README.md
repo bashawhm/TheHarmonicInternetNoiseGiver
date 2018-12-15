@@ -10,3 +10,6 @@ reserved port.
 Once this is done connect to the machine from a web browser (ideally
 Mozilla FireFox or Google Chrome) and you will be prompted with the
 THING client.
+
+The THING server depends on the following package:
+`github.com/pions/webrtc`
