@@ -7,7 +7,7 @@ body {
   line-height: 1.5;
   font: Arial;
   text-align: center;
-  background: #D5D5D5;
+  background: rgb(255, 255, 255);
 }
 
 .autocomplete {
@@ -17,7 +17,7 @@ body {
 }
 input, button {
   border: 1px solid transparent;
-  background-color: #f1f1f1;
+  background-color: #C4C4C4;
   padding: 10px;
   font-size: 16px;
   margin: 3px;
