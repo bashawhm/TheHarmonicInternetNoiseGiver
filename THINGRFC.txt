@@ -1,6 +1,5 @@
-THING Control Protocol	v1.0
-RFC Work in Progress
-============================
+THING Control Protocol	RFC	v1.0
+================================
 
 All fields must be one word in length unless otherwise specified.
 

@@ -169,9 +169,11 @@ func (lobby *Lobby) sendNotifications() {
 		for j := 0; j < len(clients[i].notifications); i++ {
 			packet.Command += clients[i].notifications[j] + "\n"
 		}
-		err := websocket.JSON.Send(clients[i].control, packet)
-		if err != nil {
-			debugPrintln(Info, err)
+		if packet.Command != "NOTIFY " {
+			err := websocket.JSON.Send(clients[i].control, packet)
+			if err != nil {
+				debugPrintln(Info, err)
+			}
 		}
 	}
 }
@@ -670,16 +672,6 @@ func main() {
 	//Initialization stuff
 	webrtc.RegisterDefaultCodecs()
 
-	lobbies = append(lobbies, Lobby{name: "SampleLobby"})
-	lobbies = append(lobbies, Lobby{name: "SamsLobby"})
-	lobbies = append(lobbies, Lobby{name: "SomeParty"})
-	lobbies = append(lobbies, Lobby{name: "SomeEvent"})
-	lobbies = append(lobbies, Lobby{name: "AnythingElse"})
-	lobbies = append(lobbies, Lobby{name: "SampleLobby2"})
-	lobbies = append(lobbies, Lobby{name: "SamsLobby2"})
-	lobbies = append(lobbies, Lobby{name: "SomeParty2"})
-	lobbies = append(lobbies, Lobby{name: "SomeEvent2"})
-	lobbies = append(lobbies, Lobby{name: "AnythingElse2"})
 	//Start server
 	http.ListenAndServe(":80", nil)
 }
